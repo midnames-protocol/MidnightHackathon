@@ -32,5 +32,17 @@ module.exports = {
     static: path.join(__dirname, 'dist/webapp'),
     compress: true,
     port: 8080,
+    https: true,
+    proxy: {
+      '/api': {
+        target: 'https://localhost:3000',
+        secure: false // Allow self-signed certificates
+      },
+      '/socket.io': {
+        target: 'https://localhost:3000',
+        ws: true,
+        secure: false // Allow self-signed certificates
+      }
+    },
   },
 };
