@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <EditText
+            android:id="@+id/etDocumentNumber"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Document Number"
+            android:layout_marginBottom="8dp"/>
+
+        <EditText
+            android:id="@+id/etDateOfBirth"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Date of Birth (YYMMDD)"
+            android:layout_marginBottom="8dp"/>
+
+        <EditText
+            android:id="@+id/etDateOfExpiry"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Date of Expiry (YYMMDD)"
+            android:layout_marginBottom="16dp"/>
+
+        <TextView
+            android:id="@+id/tvStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Place passport near device"
+            android:textAlignment="center"
+            android:layout_marginBottom="16dp"/>
+
+        <TextView
+            android:id="@+id/tvPassportData"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"/>
+
+        <ImageView
+            android:id="@+id/ivPassportPhoto"
+            android:layout_width="200dp"
+            android:layout_height="250dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp"
+            android:scaleType="fitCenter"
+            android:background="#EEEEEE"/>
+
+        <EditText
+            android:id="@+id/etIPAddress"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="ip:port of local deploy"
+            android:layout_marginBottom="16dp"/>
+
+    </LinearLayout>
+</ScrollView>
