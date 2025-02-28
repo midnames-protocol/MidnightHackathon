@@ -1,15 +1,28 @@
 import express from 'express';
-import http from 'http';
+import https from 'https';
+import fs from 'fs';
+import path from 'path';
 import cors from 'cors';
 import { Server as SocketServer } from 'socket.io';
 import { router, initSocketIO } from './routes/api';
 
 const app = express();
-const server = http.createServer(app);
+
+// SSL certificate options
+const sslOptions = {
+  key: fs.readFileSync(path.join(__dirname, '../../ssl/server.key')),
+  cert: fs.readFileSync(path.join(__dirname, '../../ssl/server.crt'))
+};
+
+// Create HTTPS server
+const server = https.createServer(sslOptions, app);
+
+// Initialize Socket.IO with HTTPS server
 const io = new SocketServer(server, {
   cors: {
-    origin: "*",
-    methods: ["GET", "POST"]
+    origin: "https://localhost:8080",  // Updated to HTTPS
+    methods: ["GET", "POST"],
+    credentials: true
   }
 });
 
@@ -30,6 +43,13 @@ app.use(express.static('dist/webapp'));
 io.on('connection', (socket) => {
   console.log('Client connected:', socket.id);
   
+  // Handle client ready event
+  socket.on('client-ready', (data) => {
+    console.log('Client ready:', data);
+    // Send a welcome message to confirm the connection is working
+    socket.emit('server-ready', { message: 'Server connection established!' });
+  });
+  
   socket.on('disconnect', () => {
     console.log('Client disconnected:', socket.id);
   });
@@ -37,5 +57,7 @@ io.on('connection', (socket) => {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server running on https://localhost:${PORT}`);
+  console.log('Note: You may need to accept the self-signed certificate in your browser');
 });
+
