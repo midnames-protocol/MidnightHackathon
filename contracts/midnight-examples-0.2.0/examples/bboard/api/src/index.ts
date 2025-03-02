@@ -223,7 +223,17 @@ export class BBoardAPI implements DeployedBBoardAPI {
 
   private static async getPrivateState(providers: BBoardProviders): Promise<BBoardPrivateState> {
     const existingPrivateState = await providers.privateStateProvider.get('bboardPrivateState');
-    return existingPrivateState ?? createBBoardPrivateState(utils.randomBytes(32));
+    return existingPrivateState ?? createBBoardPrivateState(
+      utils.randomBytes(32),
+      {
+        nationality: new Uint8Array(0),
+        date_of_birth: 0n,
+        date_of_emision: 0n,
+        expiration_date: 0n,
+        country_signature: new Uint8Array(0),
+        midnames_signature: new Uint8Array(0)
+      }
+    );
   }
 }
 

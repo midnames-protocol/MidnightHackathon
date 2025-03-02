@@ -19,7 +19,14 @@ import { WitnessContext } from '@midnight-ntwrk/compact-runtime';
 export type BBoardPrivateState = {
   // EXERCISE 1a: FILL IN A REPRESENTATION OF THE PRIVATE STATE
   readonly secretKey: Uint8Array; // EXERCISE ANSWER
-  readonly userPassportData: Uint8Array;
+  readonly userPassportData: {
+    nationality: Uint8Array<ArrayBufferLike>;
+    date_of_birth: bigint;
+    date_of_emision: bigint;
+    expiration_date: bigint;
+    country_signature: Uint8Array<ArrayBufferLike>;
+    midnames_signature: Uint8Array;
+  };
 };
 
 
@@ -68,9 +75,9 @@ export const witnesses = {
     privateState, // EXERCISE ANSWER
     privateState.secretKey, // EXERCISE ANSWER
   ],
-  user_passport_data: ({ privateState }: WitnessContext<Ledger, BBoardPrivateState>): [BBoardPrivateState, Uint8Array] => [
-    // EXERCISE 2: WHAT ARE THE CORRECT TWO VALUES TO RETURN HERE?
-    privateState, // EXERCISE ANSWER
-    privateState.userPassportData, // EXERCISE ANSWER
+  user_passport_data: ({ privateState }: WitnessContext<Ledger, BBoardPrivateState>): 
+  [BBoardPrivateState, typeof privateState.userPassportData] => [
+    privateState,
+    privateState.userPassportData
   ],
 };
