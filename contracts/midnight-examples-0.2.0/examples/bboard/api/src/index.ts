@@ -15,12 +15,20 @@ import {
   pureCircuits,
   witnesses,
   STATE,
-  UserDataPacket
+  PassportDataPacket
 } from '@midnight-ntwrk/bboard-contract';
 import * as utils from './utils/index.js';
 import { deployContract, findDeployedContract } from '@midnight-ntwrk/midnight-js-contracts';
 import { combineLatest, map, tap, from, type Observable } from 'rxjs';
 import { toHex } from '@midnight-ntwrk/midnight-js-utils';
+
+// export type PassportDataPacket = { nationality: Uint8Array;
+//   date_of_birth: bigint;
+//   date_of_emision: bigint;
+//   expiration_date: bigint;
+//   country_signature: Uint8Array;
+//   midnames_signature: Uint8Array
+// };
 
 /** @internal */
 const bboardContractInstance: BBoardContract = new Contract(witnesses);
@@ -34,6 +42,7 @@ export interface DeployedBBoardAPI {
 
   post: (message: string) => Promise<void>;
   takeDown: () => Promise<void>;
+  create_user: (userAddr: Uint8Array) => Promise<void>;
 }
 
 /**
@@ -150,7 +159,7 @@ export class BBoardAPI implements DeployedBBoardAPI {
 
     this.logger?.trace({
       transactionAdded: {
-        circuit: 'post',
+        circuit: 'create_user',
         txHash: txData.public.txHash,
         blockHeight: txData.public.blockHeight,
       },
@@ -246,14 +255,15 @@ export class BBoardAPI implements DeployedBBoardAPI {
   private static async getPrivateState(providers: BBoardProviders): Promise<BBoardPrivateState> {
     const existingPrivateState = await providers.privateStateProvider.get('bboardPrivateState');
     
-    const emptyDataPacket : UserDataPacket = {
-      nationality: new Uint8Array(0),
-      date_of_birth: BigInt(0),
-      date_of_emision: BigInt(0),
-      expiration_date: BigInt(0),
-      country_signature: new Uint8Array(0),
-      midnames_signature: new Uint8Array(0),
-    }
+
+    const emptyDataPacket: PassportDataPacket = {
+      nationality: new Uint8Array([1,2,3,4,5,6,7,8]),
+      date_of_birth: BigInt(19900101),  // Example: YYYYMMDD format
+      date_of_emision: BigInt(20230101),
+      expiration_date: BigInt(20330101),
+      country_signature: new Uint8Array([1,2,3,4,5,6,7,8, 1,2,3,4,5,6,7,8, 1,2,3,4,5,6,7,8, 1,2,3,4,5,6,7,8]),
+      midnames_signature: new Uint8Array([1,2,3,4,5,6,7,8,1,2,3,4,5,6,7,8,1,2,3,4,5,6,7,8,1,2,3,4,5,6,7,8])
+    };
     return existingPrivateState ?? createBBoardPrivateState(utils.randomBytes(32), emptyDataPacket);
   }
 }

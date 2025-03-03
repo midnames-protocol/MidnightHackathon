@@ -135,6 +135,7 @@ const displayPrivateState = async (providers: BBoardProviders, logger: Logger): 
     logger.info(`There is no existing bulletin board private state`);
   } else {
     logger.info(`Current secret key is: ${toHex(privateState.secretKey)}`);
+    logger.info(`Current passport data is: ${privateState.userPassportData}`);
   }
 };
 
@@ -171,7 +172,8 @@ You can do one of the following:
   3. Display the current ledger state (known by everyone)
   4. Display the current private state (known only to this DApp instance)
   5. Display the current derived state (known only to this DApp instance)
-  6. Exit
+  6. Create a user
+  7. Exit
 Which would you like to do? `;
 
 const mainLoop = async (providers: BBoardProviders, rli: Interface, logger: Logger): Promise<void> => {
@@ -206,6 +208,11 @@ const mainLoop = async (providers: BBoardProviders, rli: Interface, logger: Logg
           displayDerivedState(currentState, logger);
           break;
         case '6':
+          await rli.question(`Creating a dummy user`);
+          //TODO: aca va la direccion del usuario (o un identificador, secreto, etc.)
+          await bboardApi.create_user(new Uint8Array(32));
+          break;
+        case '7':
           logger.info('Exiting...');
           return;
         default:

@@ -3,7 +3,7 @@
  * as well as the single witness function that accesses it.
  */
 
-import { Ledger } from './managed/bboard/contract/index.cjs';
+import { Ledger, PassportDataPacket } from './managed/bboard/contract/index.cjs';
 import { WitnessContext } from '@midnight-ntwrk/compact-runtime';
 
 
@@ -16,26 +16,26 @@ import { WitnessContext } from '@midnight-ntwrk/compact-runtime';
  * make an object of that type.
  */
 
-export type UserDataPacket = {
-  nationality: Uint8Array;
-  date_of_birth: bigint;
-  date_of_emision: bigint;
-  expiration_date: bigint;
-  country_signature: Uint8Array;
-  midnames_signature: Uint8Array;
-};
+// export type PassportDataPacket = {
+//   nationality: Uint8Array;
+//   date_of_birth: bigint;
+//   date_of_emision: bigint;
+//   expiration_date: bigint;
+//   country_signature: Uint8Array;
+//   midnames_signature: Uint8Array;
+// };
 
 export type BBoardPrivateState = {
   // EXERCISE 1a: FILL IN A REPRESENTATION OF THE PRIVATE STATE
   readonly secretKey: Uint8Array; // EXERCISE ANSWER
-  readonly userPassportData: UserDataPacket;
+  readonly userPassportData: PassportDataPacket;
 };
 
 
 export const createBBoardPrivateState = (secretKey: Uint8Array, 
-  userPassportData: UserDataPacket) => ({
+  userPassportData: PassportDataPacket) => ({
   secretKey, // EXERCISE ANSWER
-  userPassportData
+  userPassportData,
 });
 
 /* **********************************************************************
@@ -71,7 +71,7 @@ export const witnesses = {
     privateState, // EXERCISE ANSWER
     privateState.secretKey, // EXERCISE ANSWER
   ],
-  user_passport_data: ({ privateState }: WitnessContext<Ledger, BBoardPrivateState>): [BBoardPrivateState, UserDataPacket] => [
+  user_passport_data: ({ privateState }: WitnessContext<Ledger, BBoardPrivateState>): [BBoardPrivateState, PassportDataPacket] => [
     // EXERCISE 2: WHAT ARE THE CORRECT TWO VALUES TO RETURN HERE?
     privateState, // EXERCISE ANSWER
     privateState.userPassportData, // EXERCISE ANSWER
