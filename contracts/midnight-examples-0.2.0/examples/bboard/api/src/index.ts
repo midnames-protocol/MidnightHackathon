@@ -15,6 +15,7 @@ import {
   pureCircuits,
   witnesses,
   STATE,
+  UserDataPacket
 } from '@midnight-ntwrk/bboard-contract';
 import * as utils from './utils/index.js';
 import { deployContract, findDeployedContract } from '@midnight-ntwrk/midnight-js-contracts';
@@ -136,6 +137,27 @@ export class BBoardAPI implements DeployedBBoardAPI {
     });
   }
 
+
+  /**
+   * create user function
+   */
+  async create_user(userAddr : Uint8Array): Promise<void> {
+    this.logger?.info(`creating user: ${userAddr}`);
+
+    const txData =
+      await this.deployedContract.callTx
+        .create_user(userAddr);
+
+    this.logger?.trace({
+      transactionAdded: {
+        circuit: 'post',
+        txHash: txData.public.txHash,
+        blockHeight: txData.public.blockHeight,
+      },
+    });
+  }
+
+  
   /**
    * Attempts to take down any currently posted message on the bulletin board.
    *
@@ -223,17 +245,16 @@ export class BBoardAPI implements DeployedBBoardAPI {
 
   private static async getPrivateState(providers: BBoardProviders): Promise<BBoardPrivateState> {
     const existingPrivateState = await providers.privateStateProvider.get('bboardPrivateState');
-    return existingPrivateState ?? createBBoardPrivateState(
-      utils.randomBytes(32),
-      {
-        nationality: new Uint8Array(0),
-        date_of_birth: 0n,
-        date_of_emision: 0n,
-        expiration_date: 0n,
-        country_signature: new Uint8Array(0),
-        midnames_signature: new Uint8Array(0)
-      }
-    );
+    
+    const emptyDataPacket : UserDataPacket = {
+      nationality: new Uint8Array(0),
+      date_of_birth: BigInt(0),
+      date_of_emision: BigInt(0),
+      expiration_date: BigInt(0),
+      country_signature: new Uint8Array(0),
+      midnames_signature: new Uint8Array(0),
+    }
+    return existingPrivateState ?? createBBoardPrivateState(utils.randomBytes(32), emptyDataPacket);
   }
 }
 
