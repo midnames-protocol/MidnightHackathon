@@ -12,9 +12,7 @@ import {
   Contract,
   createBBoardPrivateState,
   ledger,
-  pureCircuits,
   witnesses,
-  STATE,
   PassportDataPacket
 } from '@midnight-ntwrk/bboard-contract';
 import * as utils from './utils/index.js';
@@ -32,28 +30,16 @@ export interface DeployedBBoardAPI {
   readonly deployedContractAddress: ContractAddress;
   readonly state$: Observable<BBoardDerivedState>;
 
-  // post: (message: string) => Promise<void>;
-  // takeDown: () => Promise<void>;
-  create_user: (userAddr: Uint8Array) => Promise<void>;
+  create_user: () => Promise<void>;
+  validate_nationality: () => Promise<void>;
+  validate_adulthood: () => Promise<void>;
+  passport_is_unexpired: () => Promise<void>;
 }
 
 /**
  * Provides an implementation of {@link DeployedBBoardAPI} by adapting a deployed bulletin board
  * contract.
- *
- * @remarks
- * The `BBoardPrivateState` is managed at the DApp level by a private state provider. As such, this
- * private state is shared between all instances of {@link BBoardAPI}, and their underlying deployed
- * contracts. The private state defines a `'secretKey'` property that effectively identifies the current
- * user, and is used to determine if the current user is the poster of the message as the observable
- * contract state changes.
- *
- * In the future, Midnight.js will provide a private state provider that supports private state storage
- * keyed by contract address. This will remove the current workaround of sharing private state across
- * the deployed bulletin board contracts, and allows for a unique secret key to be generated for each bulletin
- * board that the user interacts with.
  */
-// TODO: Update BBoardAPI to use contract level private state storage.
 export class BBoardAPI implements DeployedBBoardAPI {
   /** @internal */
   private constructor(
@@ -72,32 +58,20 @@ export class BBoardAPI implements DeployedBBoardAPI {
               ledgerStateChanged: {
                 ledgerState: {
                   ...ledgerState,
-                  // state: ledgerState.state === STATE.occupied ? 'occupied' : 'vacant',
-                  // poster: toHex(ledgerState.poster),
                 },
               },
             }),
           ),
         ),
         // ...private state...
-        //    since the private state of the bulletin board application never changes, we can query the
-        //    private state once and always use the same value with `combineLatest`. In applications
-        //    where the private state is expected to change, we would need to make this an `Observable`.
         from(providers.privateStateProvider.get('bboardPrivateState') as Promise<BBoardPrivateState>),
       ],
       // ...and combine them to produce the required derived state.
       (ledgerState, privateState) => {
-        // const hashedSecretKey = pureCircuits.public_key(
-          // privateState.secretKey,
-          // convert_bigint_to_Uint8Array(32, ledgerState.instance),
-        // );
-
         return {
-          user_passport_map: ledgerState.user_passport_map,
-          // state: ledgerState.state,
-          // message: ledgerState.message.value,
-          // instance: ledgerState.instance,
-          // isOwner: toHex(ledgerState.poster) === toHex(hashedSecretKey),
+          userPassportMap: ledgerState.userPassportMap,
+          adminAddress: ledgerState.adminAddress,
+          passport_data: privateState.userPassportData
         };
       },
     );
@@ -114,41 +88,13 @@ export class BBoardAPI implements DeployedBBoardAPI {
    */
   readonly state$: Observable<BBoardDerivedState>;
 
-  // /**
-  //  * Attempts to post a given message to the bulletin board.
-  //  *
-  //  * @param message The message to post.
-  //  *
-  //  * @remarks
-  //  * This method can fail during local circuit execution if the bulletin board is currently occupied.
-  //  */
-  // async post(message: string): Promise<void> {
-  //   this.logger?.info(`postingMessage: ${message}`);
-
-  //   const txData =
-  //     // EXERCISE 3: CALL THE post CIRCUIT AND SUBMIT THE TRANSACTION TO THE NETWORK
-  //     await this.deployedContract.callTx // EXERCISE ANSWER
-  //       .post(message); // EXERCISE ANSWER
-
-  //   this.logger?.trace({
-  //     transactionAdded: {
-  //       circuit: 'post',
-  //       txHash: txData.public.txHash,
-  //       blockHeight: txData.public.blockHeight,
-  //     },
-  //   });
-  // }
-
-
   /**
    * create user function
    */
   async create_user(): Promise<void> {
-    // this.logger?.info(`creating user: ${}`);
+    this.logger?.info(`Creating user with passport data`);
 
-    const txData =
-      await this.deployedContract.callTx
-        .create_user();
+    const txData = await this.deployedContract.callTx.create_user();
 
     this.logger?.trace({
       transactionAdded: {
@@ -159,49 +105,67 @@ export class BBoardAPI implements DeployedBBoardAPI {
     });
   }
 
-  
-  // /**
-  //  * Attempts to take down any currently posted message on the bulletin board.
-  //  *
-  //  * @remarks
-  //  * This method can fail during local circuit execution if the bulletin board is currently vacant,
-  //  * or if the currently posted message isn't owned by the poster computed from the current private
-  //  * state.
-  //  */
-  // async takeDown(): Promise<void> {
-  //   this.logger?.info('takingDownMessage');
+  /**
+   * Validates that the user is argentine
+   */
+  async validate_nationality(): Promise<void> {
+    this.logger?.info('Validating nationality');
 
-  //   const txData =
-  //     // EXERCISE 4: CALL THE take_down CIRCUIT AND SUBMIT THE TRANSACTION TO THE NETWORK
-  //     await this.deployedContract.callTx // EXERCISE ANSWER
-  //       .take_down(); // EXERCISE ANSWER
+    const txData = await this.deployedContract.callTx.validate_nationality();
 
-  //   this.logger?.trace({
-  //     transactionAdded: {
-  //       circuit: 'take_down',
-  //       txHash: txData.public.txHash,
-  //       blockHeight: txData.public.blockHeight,
-  //     },
-  //   });
-  // }
+    this.logger?.trace({
+      transactionAdded: {
+        circuit: 'validate_nationality',
+        txHash: txData.public.txHash,
+        blockHeight: txData.public.blockHeight,
+      },
+    });
+  }
+
+  /**
+   * Validates that the user is over 18
+   */
+  async validate_adulthood(): Promise<void> {
+    this.logger?.info('Validating adulthood');
+
+    const txData = await this.deployedContract.callTx.validate_adulthood();
+
+    this.logger?.trace({
+      transactionAdded: {
+        circuit: 'validate_adulthood',
+        txHash: txData.public.txHash,
+        blockHeight: txData.public.blockHeight,
+      },
+    });
+  }
+
+  /**
+   * Validates passport is unexpired
+   */
+  async passport_is_unexpired(): Promise<void> {
+    this.logger?.info('Validating passport expiration');
+
+    const txData = await this.deployedContract.callTx.passport_is_unexpired();
+
+    this.logger?.trace({
+      transactionAdded: {
+        circuit: 'passport_is_unexpired',
+        txHash: txData.public.txHash,
+        blockHeight: txData.public.blockHeight,
+      },
+    });
+  }
 
   /**
    * Deploys a new bulletin board contract to the network.
-   *
-   * @param providers The bulletin board providers.
-   * @param logger An optional 'pino' logger to use for logging.
-   * @returns A `Promise` that resolves with a {@link BBoardAPI} instance that manages the newly deployed
-   * {@link DeployedBBoardContract}; or rejects with a deployment error.
    */
   static async deploy(providers: BBoardProviders, logger?: Logger): Promise<BBoardAPI> {
     logger?.info('deployContract');
 
-    // EXERCISE 5: FILL IN THE CORRECT ARGUMENTS TO deployContract
     const deployedBBoardContract = await deployContract(providers, {
-      // EXERCISE ANSWER
-      privateStateKey: 'bboardPrivateState', // EXERCISE ANSWER
+      privateStateKey: 'bboardPrivateState',
       contract: bboardContractInstance,
-      initialPrivateState: await BBoardAPI.getPrivateState(providers), // EXERCISE ANSWER
+      initialPrivateState: await BBoardAPI.getPrivateState(providers),
     });
 
     logger?.trace({
@@ -215,12 +179,6 @@ export class BBoardAPI implements DeployedBBoardAPI {
 
   /**
    * Finds an already deployed bulletin board contract on the network, and joins it.
-   *
-   * @param providers The bulletin board providers.
-   * @param contractAddress The contract address of the deployed bulletin board contract to search for and join.
-   * @param logger An optional 'pino' logger to use for logging.
-   * @returns A `Promise` that resolves with a {@link BBoardAPI} instance that manages the joined
-   * {@link DeployedBBoardContract}; or rejects with an error.
    */
   static async join(providers: BBoardProviders, contractAddress: ContractAddress, logger?: Logger): Promise<BBoardAPI> {
     logger?.info({
@@ -248,16 +206,20 @@ export class BBoardAPI implements DeployedBBoardAPI {
   private static async getPrivateState(providers: BBoardProviders): Promise<BBoardPrivateState> {
     const existingPrivateState = await providers.privateStateProvider.get('bboardPrivateState');
     
-
-    const emptyDataPacket: PassportDataPacket = {
-      nationality: new Uint8Array([1,2,3,4,5,6,7,8]),
-      date_of_birth: BigInt(19900101),  // Example: YYYYMMDD format
-      date_of_emision: BigInt(20230101),
-      expiration_date: BigInt(20330101),
-      country_signature: new Uint8Array([1,2,3,4,5,6,7,8, 1,2,3,4,5,6,7,8, 1,2,3,4,5,6,7,8, 1,2,3,4,5,6,7,8]),
-      midnames_signature: new Uint8Array([1,2,3,4,5,6,7,8,1,2,3,4,5,6,7,8,1,2,3,4,5,6,7,8,1,2,3,4,5,6,7,8])
+    // Create example passport data for Argentina
+    const examplePassportData: PassportDataPacket = {
+      nationality: new TextEncoder().encode("000000AR"),  // Argentine nationality
+      date_of_birth: BigInt(915148800),  // January 1, 1999 (over 21 years old)
+      date_of_emision: BigInt(1577836800),  // January 1, 2020
+      expiration_date: BigInt(1893456000),  // January 1, 2030
+      country_signature: crypto.getRandomValues(new Uint8Array(32)),
+      midnames_signature: crypto.getRandomValues(new Uint8Array(32))
     };
-    return existingPrivateState ?? createBBoardPrivateState(emptyDataPacket);
+    
+    // We need a secretKey as well as userPassportData
+    const secretKey = crypto.getRandomValues(new Uint8Array(32));
+    
+    return existingPrivateState ?? createBBoardPrivateState(secretKey, examplePassportData);
   }
 }
 

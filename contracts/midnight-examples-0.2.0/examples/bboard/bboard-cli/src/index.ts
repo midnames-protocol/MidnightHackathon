@@ -18,7 +18,7 @@ import {
   type BBoardDerivedState,
   type DeployedBBoardContract,
 } from '@midnight-ntwrk/bboard-api';
-import { ledger, type Ledger, STATE } from '@midnight-ntwrk/bboard-contract';
+import { ledger, type Ledger } from '@midnight-ntwrk/bboard-contract';
 import {
   type BalancedTransaction,
   createBalancedTx,
@@ -114,14 +114,10 @@ const displayLedgerState = async (
   const contractAddress = deployedBBoardContract.deployTxData.public.contractAddress;
   const ledgerState = await getBBoardLedgerState(providers, contractAddress);
   if (ledgerState === null) {
-    logger.info(`There is no bulletin board contract deployed at ${contractAddress}`);
+    logger.info(`There is no passport verification contract deployed at ${contractAddress}`);
   } else {
-    const boardState = ledgerState.state === STATE.occupied ? 'occupied' : 'vacant';
-    const latestMessage = !ledgerState.message.is_some ? 'none' : ledgerState.message.value;
-    logger.info(`Current state is: '${boardState}'`);
-    logger.info(`Current message is: '${latestMessage}'`);
-    logger.info(`Current instance is: ${ledgerState.instance}`);
-    logger.info(`Current poster is: '${toHex(ledgerState.poster)}'`);
+    logger.info(`Admin address: ${toHex(ledgerState.adminAddress)}`);
+    logger.info(`Number of registered users: ${ledgerState.userPassportMap.size()}`);
   }
 };
 
@@ -132,10 +128,14 @@ const displayLedgerState = async (
 const displayPrivateState = async (providers: BBoardProviders, logger: Logger): Promise<void> => {
   const privateState = await providers.privateStateProvider.get('bboardPrivateState');
   if (privateState === null) {
-    logger.info(`There is no existing bulletin board private state`);
+    logger.info(`There is no existing passport verification private state`);
   } else {
-    logger.info(`Current secret key is: ${toHex(privateState.secretKey)}`);
-    logger.info(`Current passport data is: ${privateState.userPassportData}`);
+    const passportData = privateState.userPassportData;
+    logger.info('Current passport data:');
+    logger.info(` - Nationality: ${new TextDecoder().decode(passportData.nationality)}`);
+    logger.info(` - Date of Birth: ${new Date(Number(passportData.date_of_birth)).toLocaleDateString()}`);
+    logger.info(` - Date of Emission: ${new Date(Number(passportData.date_of_emision)).toLocaleDateString()}`);
+    logger.info(` - Expiration Date: ${new Date(Number(passportData.expiration_date)).toLocaleDateString()}`);
   }
 };
 
@@ -148,14 +148,16 @@ const displayPrivateState = async (providers: BBoardProviders, logger: Logger): 
 
 const displayDerivedState = (ledgerState: BBoardDerivedState | undefined, logger: Logger) => {
   if (ledgerState === undefined) {
-    logger.info(`No bulletin board state currently available`);
+    logger.info(`No passport verification state currently available`);
   } else {
-    const boardState = ledgerState.state === STATE.occupied ? 'occupied' : 'vacant';
-    const latestMessage = ledgerState.state === STATE.occupied ? ledgerState.message : 'none';
-    logger.info(`Current state is: '${boardState}'`);
-    logger.info(`Current message is: '${latestMessage}'`);
-    logger.info(`Current instance is: ${ledgerState.instance}`);
-    logger.info(`Current poster is: '${ledgerState.isOwner ? 'you' : 'not you'}'`);
+    logger.info(`Admin address: ${toHex(ledgerState.adminAddress)}`);
+    logger.info(`Number of registered users: ${ledgerState.userPassportMap.size()}`);
+    const passportData = ledgerState.passport_data;
+    logger.info('Current passport data:');
+    logger.info(` - Nationality: ${new TextDecoder().decode(passportData.nationality)}`);
+    logger.info(` - Date of Birth: ${new Date(Number(passportData.date_of_birth)).toLocaleDateString()}`);
+    logger.info(` - Date of Emission: ${new Date(Number(passportData.date_of_emision)).toLocaleDateString()}`);
+    logger.info(` - Expiration Date: ${new Date(Number(passportData.expiration_date)).toLocaleDateString()}`);
   }
 };
 
@@ -167,13 +169,14 @@ const displayDerivedState = (ledgerState: BBoardDerivedState | undefined, logger
 
 const MAIN_LOOP_QUESTION = `
 You can do one of the following:
-  1. Post a message
-  2. Take down your message
-  3. Display the current ledger state (known by everyone)
-  4. Display the current private state (known only to this DApp instance)
-  5. Display the current derived state (known only to this DApp instance)
-  6. Create a user
-  7. Exit
+  1. Register user with passport
+  2. Verify nationality (Argentine)
+  3. Verify age (18+)
+  4. Verify passport expiration
+  5. Display the current ledger state (known by everyone)
+  6. Display the current private state (known only to this DApp instance)
+  7. Display the current derived state (known only to this DApp instance)
+  8. Exit
 Which would you like to do? `;
 
 const mainLoop = async (providers: BBoardProviders, rli: Interface, logger: Logger): Promise<void> => {
@@ -190,29 +193,32 @@ const mainLoop = async (providers: BBoardProviders, rli: Interface, logger: Logg
     while (true) {
       const choice = await rli.question(MAIN_LOOP_QUESTION);
       switch (choice) {
-        case '1': {
-          const message = await rli.question(`What message do you want to post? `);
-          await bboardApi.post(message);
+        case '1':
+          logger.info('Registering user with passport data...');
+          await bboardApi.create_user();
           break;
-        }
         case '2':
-          await bboardApi.takeDown();
+          logger.info('Verifying nationality...');
+          await bboardApi.validate_nationality();
           break;
         case '3':
-          await displayLedgerState(providers, bboardApi.deployedContract, logger);
+          logger.info('Verifying age...');
+          await bboardApi.validate_adulthood();
           break;
         case '4':
-          await displayPrivateState(providers, logger);
+          logger.info('Verifying passport expiration...');
+          await bboardApi.passport_is_unexpired();
           break;
         case '5':
-          displayDerivedState(currentState, logger);
+          await displayLedgerState(providers, bboardApi.deployedContract, logger);
           break;
         case '6':
-          await rli.question(`Creating a dummy user`);
-          //TODO: aca va la direccion del usuario (o un identificador, secreto, etc.)
-          await bboardApi.create_user(new Uint8Array(32));
+          await displayPrivateState(providers, logger);
           break;
         case '7':
+          displayDerivedState(currentState, logger);
+          break;
+        case '8':
           logger.info('Exiting...');
           return;
         default:
@@ -220,8 +226,6 @@ const mainLoop = async (providers: BBoardProviders, rli: Interface, logger: Logg
       }
     }
   } finally {
-    // While we allow errors to bubble up to the 'run' function, we will always need to dispose of the state
-    // subscription when we exit.
     subscription.unsubscribe();
   }
 };
@@ -403,7 +407,7 @@ export const run = async (config: Config, logger: Logger, dockerEnv?: DockerComp
           privateStateStoreName: config.privateStateStoreName,
         }),
         publicDataProvider: indexerPublicDataProvider(config.indexer, config.indexerWS),
-        zkConfigProvider: new NodeZkConfigProvider<'post' | 'take_down'>(config.zkConfigPath),
+        zkConfigProvider: new NodeZkConfigProvider<'create_user' | 'validate_nationality' | 'validate_adulthood' | 'passport_is_unexpired'>(config.zkConfigPath),
         proofProvider: httpClientProofProvider(config.proofServer),
         walletProvider: walletAndMidnightProvider,
         midnightProvider: walletAndMidnightProvider,

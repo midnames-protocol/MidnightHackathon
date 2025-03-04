@@ -18,28 +18,28 @@ import type {
  */
 export type PrivateStates = {
   /**
-   * Key used to provide the private state for {@link BBoardContract} deployments.
+   * Key used to provide the private state for passport verification contract deployments.
    */
   readonly bboardPrivateState: BBoardPrivateState;
 };
 
 /**
- * Represents a bulletin board contract and its private state.
+ * Represents a passport verification contract and its private state.
  */
 export type BBoardContract = Contract<BBoardPrivateState, Witnesses<BBoardPrivateState>>;
 
 /**
- * The keys of the circuits exported from {@link BBoardContract}.
+ * The keys of the circuits exported from passport verification contract.
  */
-export type BBoardCircuitKeys = Exclude<keyof BBoardContract['impureCircuits'], number | symbol>;
+export type BBoardCircuitKeys = 'create_user' | 'validate_nationality' | 'validate_adulthood' | 'passport_is_unexpired';
 
 /**
- * The providers required by {@link BBoardContract}.
+ * The providers required by the passport verification contract.
  */
 export type BBoardProviders = MidnightProviders<BBoardCircuitKeys, PrivateStates>;
 
 /**
- * A {@link BBoardContract} that has been deployed to the network.
+ * A passport verification contract that has been deployed to the network.
  */
 export type DeployedBBoardContract = FoundContract<BBoardPrivateState, BBoardContract>;
 
