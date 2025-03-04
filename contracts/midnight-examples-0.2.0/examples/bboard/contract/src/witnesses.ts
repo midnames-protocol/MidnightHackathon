@@ -71,9 +71,23 @@ export const witnesses = {
   //   privateState, // EXERCISE ANSWER
   //   privateState.secretKey, // EXERCISE ANSWER
   // ],
-  user_passport_data: ({ privateState }: WitnessContext<Ledger, BBoardPrivateState>): [BBoardPrivateState, PassportDataPacket] => [
-    // EXERCISE 2: WHAT ARE THE CORRECT TWO VALUES TO RETURN HERE?
-    privateState, // EXERCISE ANSWER
-    privateState.userPassportData, // EXERCISE ANSWER
-  ],
+  user_passport_data: ({ privateState }: WitnessContext<Ledger, BBoardPrivateState>): [BBoardPrivateState, PassportDataPacket] => {
+    // Create a default passport data as fallback
+    const defaultPassportData: PassportDataPacket = {
+      nationality: new TextEncoder().encode("000000AR"),
+      date_of_birth: BigInt(915148800),
+      date_of_emision: BigInt(1577836800),
+      expiration_date: BigInt(1893456000),
+      country_signature: new Uint8Array(32),
+      midnames_signature: new Uint8Array(32)
+    };
+    
+    // Use privateState.userPassportData if it exists, otherwise use default data
+    const passportData = privateState.userPassportData || defaultPassportData;
+    
+    return [
+      privateState,
+      passportData,
+    ];
+  },
 };

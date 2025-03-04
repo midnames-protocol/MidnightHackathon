@@ -151,7 +151,7 @@ export class BBoardAPI implements DeployedBBoardAPI {
       transactionAdded: {
         circuit: 'passport_is_unexpired',
         txHash: txData.public.txHash,
-        blockHeight: txData.public.blockHeight,
+        blockHeight: txData.public.txHash,
       },
     });
   }
@@ -219,7 +219,13 @@ export class BBoardAPI implements DeployedBBoardAPI {
     // We need a secretKey as well as userPassportData
     const secretKey = crypto.getRandomValues(new Uint8Array(32));
     
-    return existingPrivateState ?? createBBoardPrivateState(secretKey, examplePassportData);
+    // Check if existingPrivateState has a valid userPassportData, if not create a new state
+    if (existingPrivateState && existingPrivateState.userPassportData) {
+      return existingPrivateState;
+    } else {
+      // Either no existing state or invalid state, create a new one
+      return createBBoardPrivateState(secretKey, examplePassportData);
+    }
   }
 }
 
