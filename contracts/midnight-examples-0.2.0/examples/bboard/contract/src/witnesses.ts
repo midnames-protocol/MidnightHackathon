@@ -27,14 +27,14 @@ import { WitnessContext } from '@midnight-ntwrk/compact-runtime';
 
 export type BBoardPrivateState = {
   // EXERCISE 1a: FILL IN A REPRESENTATION OF THE PRIVATE STATE
-  readonly secretKey: Uint8Array; // EXERCISE ANSWER
+  // readonly secretKey: Uint8Array; // EXERCISE ANSWER
   readonly userPassportData: PassportDataPacket;
 };
 
 
 export const createBBoardPrivateState = (secretKey: Uint8Array, 
   userPassportData: PassportDataPacket) => ({
-  secretKey, // EXERCISE ANSWER
+  // secretKey, // EXERCISE ANSWER
   userPassportData,
 });
 
@@ -66,11 +66,11 @@ export const createBBoardPrivateState = (secretKey: Uint8Array,
  * only the binding for the privateState in scope.
  */
 export const witnesses = {
-  local_secret_key: ({ privateState }: WitnessContext<Ledger, BBoardPrivateState>): [BBoardPrivateState, Uint8Array] => [
-    // EXERCISE 2: WHAT ARE THE CORRECT TWO VALUES TO RETURN HERE?
-    privateState, // EXERCISE ANSWER
-    privateState.secretKey, // EXERCISE ANSWER
-  ],
+  // local_secret_key: ({ privateState }: WitnessContext<Ledger, BBoardPrivateState>): [BBoardPrivateState, Uint8Array] => [
+  //   // EXERCISE 2: WHAT ARE THE CORRECT TWO VALUES TO RETURN HERE?
+  //   privateState, // EXERCISE ANSWER
+  //   privateState.secretKey, // EXERCISE ANSWER
+  // ],
   user_passport_data: ({ privateState }: WitnessContext<Ledger, BBoardPrivateState>): [BBoardPrivateState, PassportDataPacket] => [
     // EXERCISE 2: WHAT ARE THE CORRECT TWO VALUES TO RETURN HERE?
     privateState, // EXERCISE ANSWER

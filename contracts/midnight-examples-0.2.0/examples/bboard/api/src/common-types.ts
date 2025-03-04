@@ -63,9 +63,10 @@ export type DeployedBBoardContract = FoundContract<BBoardPrivateState, BBoardCon
  * A type that represents the derived combination of public (or ledger), and private state.
  */
 export type BBoardDerivedState = {
-  readonly state: STATE;
-  readonly instance: bigint;
-  readonly message: string | undefined;
+  readonly user_passport_map : Map<Uint8Array, Uint8Array>;
+  // readonly state: STATE;
+  // readonly instance: bigint;
+  // readonly message: string | undefined;
 
   /**
    * A readonly flag that determines if the current message was posted by the current user.
@@ -75,5 +76,5 @@ export type BBoardDerivedState = {
    * the `secretKey` property of {@link BBoardPrivateState} is the secret key of the current user. If
    * `poster` corresponds to `secretKey`, then `isOwner` is `true`.
    */
-  readonly isOwner: boolean;
+  // readonly isOwner: boolean;
 };

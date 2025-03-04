@@ -2,50 +2,12 @@ pragma language_version >= 0.14.0;
 
 import CompactStandardLibrary;
 
-export enum STATE { vacant, occupied }
 
-export ledger state: STATE;
-export ledger message: Maybe<Opaque<"string">>;
-export ledger instance: Counter;
-export ledger poster: Bytes<32>;
-// export ledger admin_address: Bytes<32>;
+export ledger admin_address: Bytes<32>;
 
 constructor() {
-    state = STATE.vacant;
-    message = none<Opaque<"string">>();
-    instance.increment(1);
-    // admin_address = own_public_key().bytes;
+    admin_address = own_public_key().bytes;
 }
-
-witness local_secret_key(): Bytes<32>;
-
-export circuit post(new_message: Opaque<"string">): [] {
-    assert state == STATE.vacant
-        "Attempted to post to an occupied board";
-    poster = disclose(public_key(local_secret_key(), instance as Field as Bytes<32>));
-    message = some<Opaque<"string">>(new_message);
-    state = STATE.occupied;
-}
-
-export circuit take_down(): Opaque<"string"> {
-    assert state == STATE.occupied
-        "Attempted to take down post from an empty board";
-    assert poster == public_key(local_secret_key(), instance as Field as Bytes<32>)
-        "Attempted to take down post, but not the current poster";
-    const former_msg = message.value;
-    state = STATE.vacant;
-    instance.increment(1);
-    message = none<Opaque<"string">>();
-    return former_msg;
-}
-
-export circuit public_key(sk: Bytes<32>, instance: Bytes<32>): Bytes<32> {
-    return persistent_hash<Vector<2, Bytes<32>>>([persistent_hash<Vector<2, Bytes<32>>>([pad(32, "bboard:pk:"), instance]), sk]);
-}
-
-
-
-
 
 
 //We define a passport data packet
@@ -66,23 +28,22 @@ export ledger user_passport_map: Map<Bytes<32>, Bytes<32>>;
 witness user_passport_data() : PassportDataPacket;
 
 
-export circuit create_user(userAddr : Bytes<32>) : [] {
+export circuit create_user() : [] {
     // // get caller address
-    // const callerAddr = own_public_key();
+    const callerAddr : Bytes<32> = own_public_key().bytes;
 
     // //this function is permissioned, should be called only by us.
     // assert callerAddr != admin_address
     //     "User creation is permissioned, may only be done by the app";
 
-
-    assert user_passport_map.member(userAddr) != true
+    assert user_passport_map.member(callerAddr) != true
         "User already in the system";
 
     //we assume in this instance, the data passed by witness is trusted
     const passportDataHash = disclose(persistent_hash<PassportDataPacket>(user_passport_data()));
 
     // insert into the address mapping
-    user_passport_map.insert(userAddr, passportDataHash);
+    user_passport_map.insert(callerAddr, passportDataHash);
 }
 
 
@@ -90,50 +51,62 @@ circuit auth_user(user_pass : PassportDataPacket) : [] {
     //tendria esto que ser transient?
     //we assume in this instance, the data passed by witness is trusted
     const passportDataHash = disclose(persistent_hash<PassportDataPacket>(user_pass));
-    
-    assert user_passport_map.member(passportDataHash) != true
+
+    const user_pubkey = own_public_key().bytes;
+
+    assert user_passport_map.member(user_pubkey) != true
         "User is unregistered, so data can't be authenticated";
+
+    assert passportDataHash == user_passport_map.lookup(user_pubkey)
+        "Provided passport data does not match data stored in the trusted database";
 }
 
 
-
-
 //validates that the user is argentine
-// export circuit validate_nationality() : [] {
-//     const user_pass = user_passport_data();
+export circuit validate_nationality() : [] {
+    const user_pass = user_passport_data();
 
-//     //validate passport data
-//     auth_user(user_pass);
+    //validate passport data
+    auth_user(user_pass);
 
-//     const nationality = user_pass.nationality;
-//     assert nationality == "000000AR" as Bytes<32>;
-//         "User is not argentine";
-// }
+    const nationality = user_pass.nationality;
+    assert nationality == "000000AR" as Bytes<8>
+        "User is not argentine";
+}
 
 
-//TODO: ver como traemos la fecha de hoy
+//validates that the user is older than 18
+export circuit validate_adulthood() : [] {
+    //Hardcoded for now. TODO: once a datetime function
+    // is in place in Compact, use that
+    const datetime = 1741058834;
 
-// //validates that the user is older than 18
-// export circuit validate_adulthood(datetime : Uint<64>)
-// {
-//     const birthdate = user_passport_data().date_of_birth;
+    const user_pass = user_passport_data();
 
-//     //validate passport data
-//     auth_user(user_pass);
+    //validate passport data
+    auth_user(user_pass);
 
-//     const birthdate = user_passport_data().date_of_birth;
-//     adulthood_in_nanoseconds = Uint<64>(568036800);
+    const birthdate = user_pass.date_of_birth;
+    const adulthood_in_nanoseconds = 568036800 as Uint<64>;
 
-//     assert (today - birthdate) > adulthood_in_nanoseconds
-//      "User is not old enough"
-// }
+    assert (datetime - birthdate) > adulthood_in_nanoseconds
+     "User is not old enough";
+}
 
-// export circuit passport_is_unexpired() : []
-// {
-//     const user_pass = user_passport_data();
 
-//     //validate passport data
-//     auth_user(user_pass);
+//validates that a passport is unexpired
+export circuit passport_is_unexpired() : [] {
+    //Hardcoded for now. TODO: once a datetime function
+    // is in place in Compact, use that
+    const datetime = 1741058834;
 
-//     const exp_date = user_pass.expiration_date;
-// }
+    const user_pass = user_passport_data();
+
+    //validate passport data
+    auth_user(user_pass);
+
+    const expdate = user_pass.expiration_date;
+    assert expdate > datetime
+     "Passport is expired";
+    //TODO: here I could perform a cleanup (remove expired passport from mapping)
+}

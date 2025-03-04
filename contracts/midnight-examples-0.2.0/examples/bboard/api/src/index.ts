@@ -22,14 +22,6 @@ import { deployContract, findDeployedContract } from '@midnight-ntwrk/midnight-j
 import { combineLatest, map, tap, from, type Observable } from 'rxjs';
 import { toHex } from '@midnight-ntwrk/midnight-js-utils';
 
-// export type PassportDataPacket = { nationality: Uint8Array;
-//   date_of_birth: bigint;
-//   date_of_emision: bigint;
-//   expiration_date: bigint;
-//   country_signature: Uint8Array;
-//   midnames_signature: Uint8Array
-// };
-
 /** @internal */
 const bboardContractInstance: BBoardContract = new Contract(witnesses);
 
@@ -40,8 +32,8 @@ export interface DeployedBBoardAPI {
   readonly deployedContractAddress: ContractAddress;
   readonly state$: Observable<BBoardDerivedState>;
 
-  post: (message: string) => Promise<void>;
-  takeDown: () => Promise<void>;
+  // post: (message: string) => Promise<void>;
+  // takeDown: () => Promise<void>;
   create_user: (userAddr: Uint8Array) => Promise<void>;
 }
 
@@ -80,8 +72,8 @@ export class BBoardAPI implements DeployedBBoardAPI {
               ledgerStateChanged: {
                 ledgerState: {
                   ...ledgerState,
-                  state: ledgerState.state === STATE.occupied ? 'occupied' : 'vacant',
-                  poster: toHex(ledgerState.poster),
+                  // state: ledgerState.state === STATE.occupied ? 'occupied' : 'vacant',
+                  // poster: toHex(ledgerState.poster),
                 },
               },
             }),
@@ -95,16 +87,17 @@ export class BBoardAPI implements DeployedBBoardAPI {
       ],
       // ...and combine them to produce the required derived state.
       (ledgerState, privateState) => {
-        const hashedSecretKey = pureCircuits.public_key(
-          privateState.secretKey,
-          convert_bigint_to_Uint8Array(32, ledgerState.instance),
-        );
+        // const hashedSecretKey = pureCircuits.public_key(
+          // privateState.secretKey,
+          // convert_bigint_to_Uint8Array(32, ledgerState.instance),
+        // );
 
         return {
-          state: ledgerState.state,
-          message: ledgerState.message.value,
-          instance: ledgerState.instance,
-          isOwner: toHex(ledgerState.poster) === toHex(hashedSecretKey),
+          user_passport_map: ledgerState.user_passport_map,
+          // state: ledgerState.state,
+          // message: ledgerState.message.value,
+          // instance: ledgerState.instance,
+          // isOwner: toHex(ledgerState.poster) === toHex(hashedSecretKey),
         };
       },
     );
@@ -121,41 +114,41 @@ export class BBoardAPI implements DeployedBBoardAPI {
    */
   readonly state$: Observable<BBoardDerivedState>;
 
-  /**
-   * Attempts to post a given message to the bulletin board.
-   *
-   * @param message The message to post.
-   *
-   * @remarks
-   * This method can fail during local circuit execution if the bulletin board is currently occupied.
-   */
-  async post(message: string): Promise<void> {
-    this.logger?.info(`postingMessage: ${message}`);
+  // /**
+  //  * Attempts to post a given message to the bulletin board.
+  //  *
+  //  * @param message The message to post.
+  //  *
+  //  * @remarks
+  //  * This method can fail during local circuit execution if the bulletin board is currently occupied.
+  //  */
+  // async post(message: string): Promise<void> {
+  //   this.logger?.info(`postingMessage: ${message}`);
 
-    const txData =
-      // EXERCISE 3: CALL THE post CIRCUIT AND SUBMIT THE TRANSACTION TO THE NETWORK
-      await this.deployedContract.callTx // EXERCISE ANSWER
-        .post(message); // EXERCISE ANSWER
+  //   const txData =
+  //     // EXERCISE 3: CALL THE post CIRCUIT AND SUBMIT THE TRANSACTION TO THE NETWORK
+  //     await this.deployedContract.callTx // EXERCISE ANSWER
+  //       .post(message); // EXERCISE ANSWER
 
-    this.logger?.trace({
-      transactionAdded: {
-        circuit: 'post',
-        txHash: txData.public.txHash,
-        blockHeight: txData.public.blockHeight,
-      },
-    });
-  }
+  //   this.logger?.trace({
+  //     transactionAdded: {
+  //       circuit: 'post',
+  //       txHash: txData.public.txHash,
+  //       blockHeight: txData.public.blockHeight,
+  //     },
+  //   });
+  // }
 
 
   /**
    * create user function
    */
-  async create_user(userAddr : Uint8Array): Promise<void> {
-    this.logger?.info(`creating user: ${userAddr}`);
+  async create_user(): Promise<void> {
+    // this.logger?.info(`creating user: ${}`);
 
     const txData =
       await this.deployedContract.callTx
-        .create_user(userAddr);
+        .create_user();
 
     this.logger?.trace({
       transactionAdded: {
@@ -167,30 +160,30 @@ export class BBoardAPI implements DeployedBBoardAPI {
   }
 
   
-  /**
-   * Attempts to take down any currently posted message on the bulletin board.
-   *
-   * @remarks
-   * This method can fail during local circuit execution if the bulletin board is currently vacant,
-   * or if the currently posted message isn't owned by the poster computed from the current private
-   * state.
-   */
-  async takeDown(): Promise<void> {
-    this.logger?.info('takingDownMessage');
+  // /**
+  //  * Attempts to take down any currently posted message on the bulletin board.
+  //  *
+  //  * @remarks
+  //  * This method can fail during local circuit execution if the bulletin board is currently vacant,
+  //  * or if the currently posted message isn't owned by the poster computed from the current private
+  //  * state.
+  //  */
+  // async takeDown(): Promise<void> {
+  //   this.logger?.info('takingDownMessage');
 
-    const txData =
-      // EXERCISE 4: CALL THE take_down CIRCUIT AND SUBMIT THE TRANSACTION TO THE NETWORK
-      await this.deployedContract.callTx // EXERCISE ANSWER
-        .take_down(); // EXERCISE ANSWER
+  //   const txData =
+  //     // EXERCISE 4: CALL THE take_down CIRCUIT AND SUBMIT THE TRANSACTION TO THE NETWORK
+  //     await this.deployedContract.callTx // EXERCISE ANSWER
+  //       .take_down(); // EXERCISE ANSWER
 
-    this.logger?.trace({
-      transactionAdded: {
-        circuit: 'take_down',
-        txHash: txData.public.txHash,
-        blockHeight: txData.public.blockHeight,
-      },
-    });
-  }
+  //   this.logger?.trace({
+  //     transactionAdded: {
+  //       circuit: 'take_down',
+  //       txHash: txData.public.txHash,
+  //       blockHeight: txData.public.blockHeight,
+  //     },
+  //   });
+  // }
 
   /**
    * Deploys a new bulletin board contract to the network.
@@ -264,7 +257,7 @@ export class BBoardAPI implements DeployedBBoardAPI {
       country_signature: new Uint8Array([1,2,3,4,5,6,7,8, 1,2,3,4,5,6,7,8, 1,2,3,4,5,6,7,8, 1,2,3,4,5,6,7,8]),
       midnames_signature: new Uint8Array([1,2,3,4,5,6,7,8,1,2,3,4,5,6,7,8,1,2,3,4,5,6,7,8,1,2,3,4,5,6,7,8])
     };
-    return existingPrivateState ?? createBBoardPrivateState(utils.randomBytes(32), emptyDataPacket);
+    return existingPrivateState ?? createBBoardPrivateState(emptyDataPacket);
   }
 }
 
