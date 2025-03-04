@@ -2,15 +2,13 @@ pragma language_version >= 0.14.0;
 
 import CompactStandardLibrary;
 
-
 export ledger admin_address: Bytes<32>;
 
 constructor() {
     admin_address = own_public_key().bytes;
 }
 
-
-//We define a passport data packet
+// We define a passport data packet
 export struct PassportDataPacket {
     nationality: Bytes<8>,
     date_of_birth: Uint<64>,
@@ -20,72 +18,25 @@ export struct PassportDataPacket {
     midnames_signature: Bytes<32>
 }
 
-//The user passport map maps a user to a valid passport hash (which includes all passport
-//  data, country signature, and our signature). This operation can only be done once.
-export ledger user_passport_map: Map<Bytes<32>, Bytes<32>>;
-
-//raw user passport data, concatenated with country signature and midnames certifying signature
+// Raw user passport data from the private state
 witness user_passport_data() : PassportDataPacket;
 
-
-export circuit create_user() : [] {
-    // // get caller address
-    const callerAddr : Bytes<32> = own_public_key().bytes;
-
-    // //this function is permissioned, should be called only by us.
-    // assert callerAddr != admin_address
-    //     "User creation is permissioned, may only be done by the app";
-
-    assert user_passport_map.member(callerAddr) != true
-        "User already in the system";
-
-    //we assume in this instance, the data passed by witness is trusted
-    const passportDataHash = disclose(persistent_hash<PassportDataPacket>(user_passport_data()));
-
-    // insert into the address mapping
-    user_passport_map.insert(callerAddr, passportDataHash);
-}
-
-
-circuit auth_user(user_pass : PassportDataPacket) : [] {
-    //tendria esto que ser transient?
-    //we assume in this instance, the data passed by witness is trusted
-    const passportDataHash = disclose(persistent_hash<PassportDataPacket>(user_pass));
-
-    const user_pubkey = own_public_key().bytes;
-
-    assert user_passport_map.member(user_pubkey) != true
-        "User is unregistered, so data can't be authenticated";
-
-    assert passportDataHash == user_passport_map.lookup(user_pubkey)
-        "Provided passport data does not match data stored in the trusted database";
-}
-
-
-//validates that the user is argentine
+// Validates that the user is argentine
 export circuit validate_nationality() : [] {
     const user_pass = user_passport_data();
-
-    //validate passport data
-    auth_user(user_pass);
-
     const nationality = user_pass.nationality;
+    
     assert nationality == "000000AR" as Bytes<8>
         "User is not argentine";
 }
 
-
-//validates that the user is older than 18
+// Validates that the user is older than 18
 export circuit validate_adulthood() : [] {
-    //Hardcoded for now. TODO: once a datetime function
+    // Hardcoded for now. TODO: once a datetime function
     // is in place in Compact, use that
     const datetime = 1741058834;
 
     const user_pass = user_passport_data();
-
-    //validate passport data
-    auth_user(user_pass);
-
     const birthdate = user_pass.date_of_birth;
     const adulthood_in_nanoseconds = 568036800 as Uint<64>;
 
@@ -93,20 +44,33 @@ export circuit validate_adulthood() : [] {
      "User is not old enough";
 }
 
-
-//validates that a passport is unexpired
+// Validates that a passport is unexpired
 export circuit passport_is_unexpired() : [] {
-    //Hardcoded for now. TODO: once a datetime function
+    // Hardcoded for now. TODO: once a datetime function
     // is in place in Compact, use that
     const datetime = 1741058834;
 
     const user_pass = user_passport_data();
-
-    //validate passport data
-    auth_user(user_pass);
-
     const expdate = user_pass.expiration_date;
+    
     assert expdate > datetime
      "Passport is expired";
-    //TODO: here I could perform a cleanup (remove expired passport from mapping)
 }
+
+///export circuit create_user() : [] {
+//   // // get caller address
+//   const callerAddr : Bytes<32> = own_public_key().bytes;
+//
+//   // //this function is permissioned, should be called only by us.
+//   // assert callerAddr != admin_address
+//   //     "User creation is permissioned, may only be done by the app";
+//
+//   assert user_passport_map.member(callerAddr) != true
+//       "User already in the system";
+//
+//   //we assume in this instance, the data passed by witness is trusted
+//   const passportDataHash = disclose(persistent_hash<PassportDataPacket>(user_passport_data()));
+//
+//   // insert into the address mapping
+//   user_passport_map.insert(callerAddr, passportDataHash);
+//

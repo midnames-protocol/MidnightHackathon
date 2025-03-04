@@ -30,10 +30,17 @@ export interface DeployedBBoardAPI {
   readonly deployedContractAddress: ContractAddress;
   readonly state$: Observable<BBoardDerivedState>;
 
-  create_user: () => Promise<void>;
   validate_nationality: () => Promise<void>;
   validate_adulthood: () => Promise<void>;
   passport_is_unexpired: () => Promise<void>;
+}
+
+// Interface for passport data from the UI form
+export interface PassportFormData {
+  nationality: string;
+  dateOfBirth: Date;
+  dateOfEmission: Date;
+  expirationDate: Date;
 }
 
 /**
@@ -69,7 +76,6 @@ export class BBoardAPI implements DeployedBBoardAPI {
       // ...and combine them to produce the required derived state.
       (ledgerState, privateState) => {
         return {
-          userPassportMap: ledgerState.userPassportMap,
           adminAddress: ledgerState.adminAddress,
           passport_data: privateState.userPassportData
         };
@@ -89,23 +95,6 @@ export class BBoardAPI implements DeployedBBoardAPI {
   readonly state$: Observable<BBoardDerivedState>;
 
   /**
-   * create user function
-   */
-  async create_user(): Promise<void> {
-    this.logger?.info(`Creating user with passport data`);
-
-    const txData = await this.deployedContract.callTx.create_user();
-
-    this.logger?.trace({
-      transactionAdded: {
-        circuit: 'create_user',
-        txHash: txData.public.txHash,
-        blockHeight: txData.public.blockHeight,
-      },
-    });
-  }
-
-  /**
    * Validates that the user is argentine
    */
   async validate_nationality(): Promise<void> {
@@ -117,7 +106,7 @@ export class BBoardAPI implements DeployedBBoardAPI {
       transactionAdded: {
         circuit: 'validate_nationality',
         txHash: txData.public.txHash,
-        blockHeight: txData.public.blockHeight,
+        blockHeight: txData.public.txHash,
       },
     });
   }
@@ -134,7 +123,7 @@ export class BBoardAPI implements DeployedBBoardAPI {
       transactionAdded: {
         circuit: 'validate_adulthood',
         txHash: txData.public.txHash,
-        blockHeight: txData.public.blockHeight,
+        blockHeight: txData.public.txHash,
       },
     });
   }
@@ -159,13 +148,13 @@ export class BBoardAPI implements DeployedBBoardAPI {
   /**
    * Deploys a new bulletin board contract to the network.
    */
-  static async deploy(providers: BBoardProviders, logger?: Logger): Promise<BBoardAPI> {
+  static async deploy(providers: BBoardProviders, passportData?: PassportFormData, logger?: Logger): Promise<BBoardAPI> {
     logger?.info('deployContract');
 
     const deployedBBoardContract = await deployContract(providers, {
       privateStateKey: 'bboardPrivateState',
       contract: bboardContractInstance,
-      initialPrivateState: await BBoardAPI.getPrivateState(providers),
+      initialPrivateState: await BBoardAPI.getPrivateState(providers, passportData),
     });
 
     logger?.trace({
@@ -203,29 +192,44 @@ export class BBoardAPI implements DeployedBBoardAPI {
     return new BBoardAPI(deployedBBoardContract, providers, logger);
   }
 
-  private static async getPrivateState(providers: BBoardProviders): Promise<BBoardPrivateState> {
+  private static async getPrivateState(providers: BBoardProviders, passportData?: PassportFormData): Promise<BBoardPrivateState> {
     const existingPrivateState = await providers.privateStateProvider.get('bboardPrivateState');
     
-    // Create example passport data for Argentina
-    const examplePassportData: PassportDataPacket = {
-      nationality: new TextEncoder().encode("000000AR"),  // Argentine nationality
-      date_of_birth: BigInt(915148800),  // January 1, 1999 (over 21 years old)
-      date_of_emision: BigInt(1577836800),  // January 1, 2020
-      expiration_date: BigInt(1893456000),  // January 1, 2030
-      country_signature: crypto.getRandomValues(new Uint8Array(32)),
-      midnames_signature: crypto.getRandomValues(new Uint8Array(32))
-    };
+    // If we have existing private state with valid passport data, use it
+    if (existingPrivateState && existingPrivateState.userPassportData) {
+      return existingPrivateState;
+    }
+    
+    // Create passport data - either from form or default values
+    let examplePassportData: PassportDataPacket;
+    
+    if (passportData) {
+      // Convert form data to PassportDataPacket
+      examplePassportData = {
+        nationality: new TextEncoder().encode(passportData.nationality),
+        date_of_birth: BigInt(Math.floor(passportData.dateOfBirth.getTime() / 1000)),
+        date_of_emision: BigInt(Math.floor(passportData.dateOfEmission.getTime() / 1000)),
+        expiration_date: BigInt(Math.floor(passportData.expirationDate.getTime() / 1000)),
+        country_signature: crypto.getRandomValues(new Uint8Array(32)),
+        midnames_signature: crypto.getRandomValues(new Uint8Array(32))
+      };
+    } else {
+      // Use default passport data if none provided
+      examplePassportData = {
+        nationality: new TextEncoder().encode("000000AR"),  // Argentine nationality
+        date_of_birth: BigInt(915148800),  // January 1, 1999 (over 21 years old)
+        date_of_emision: BigInt(1577836800),  // January 1, 2020
+        expiration_date: BigInt(1893456000),  // January 1, 2030
+        country_signature: crypto.getRandomValues(new Uint8Array(32)),
+        midnames_signature: crypto.getRandomValues(new Uint8Array(32))
+      };
+    }
     
     // We need a secretKey as well as userPassportData
     const secretKey = crypto.getRandomValues(new Uint8Array(32));
     
-    // Check if existingPrivateState has a valid userPassportData, if not create a new state
-    if (existingPrivateState && existingPrivateState.userPassportData) {
-      return existingPrivateState;
-    } else {
-      // Either no existing state or invalid state, create a new one
-      return createBBoardPrivateState(secretKey, examplePassportData);
-    }
+    // Create new private state with passport data
+    return createBBoardPrivateState(secretKey, examplePassportData);
   }
 }
 

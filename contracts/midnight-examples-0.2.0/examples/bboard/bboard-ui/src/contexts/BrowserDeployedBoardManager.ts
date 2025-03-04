@@ -35,6 +35,7 @@ import { type CoinInfo, Transaction, type TransactionId } from '@midnight-ntwrk/
 import { Transaction as ZswapTransaction } from '@midnight-ntwrk/zswap';
 import semver from 'semver';
 import { getLedgerNetworkId, getZswapNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
+import { PassportFormData } from '../components/PassportDataForm';
 
 /**
  * An in-progress bulletin board deployment.
@@ -90,13 +91,14 @@ export interface DeployedBoardAPIProvider {
    * Joins or deploys a bulletin board contract.
    *
    * @param contractAddress An optional contract address to use when resolving.
+   * @param passportData Optional passport data to use when deploying a new contract.
    * @returns An observable board deployment.
    *
    * @remarks
    * For a given `contractAddress`, the method will attempt to find and join the identified bulletin board
    * contract; otherwise it will attempt to deploy a new one.
    */
-  readonly resolve: (contractAddress?: ContractAddress) => Observable<BoardDeployment>;
+  readonly resolve: (contractAddress?: ContractAddress, passportData?: PassportFormData) => Observable<BoardDeployment>;
 }
 
 /**
@@ -124,7 +126,7 @@ export class BrowserDeployedBoardManager implements DeployedBoardAPIProvider {
   readonly boardDeployments$: Observable<Array<Observable<BoardDeployment>>>;
 
   /** @inheritdoc */
-  resolve(contractAddress?: ContractAddress): Observable<BoardDeployment> {
+  resolve(contractAddress?: ContractAddress, passportData?: PassportFormData): Observable<BoardDeployment> {
     const deployments = this.#boardDeploymentsSubject.value;
     let deployment = deployments.find(
       (deployment) =>
@@ -142,7 +144,7 @@ export class BrowserDeployedBoardManager implements DeployedBoardAPIProvider {
     if (contractAddress) {
       void this.joinDeployment(deployment, contractAddress);
     } else {
-      void this.deployDeployment(deployment);
+      void this.deployDeployment(deployment, passportData);
     }
 
     this.#boardDeploymentsSubject.next([...deployments, deployment]);
@@ -160,10 +162,10 @@ export class BrowserDeployedBoardManager implements DeployedBoardAPIProvider {
     return this.#initializedProviders ?? (this.#initializedProviders = initializeProviders(this.logger));
   }
 
-  private async deployDeployment(deployment: BehaviorSubject<BoardDeployment>): Promise<void> {
+  private async deployDeployment(deployment: BehaviorSubject<BoardDeployment>, passportData?: PassportFormData): Promise<void> {
     try {
       const providers = await this.getProviders();
-      const api = await BBoardAPI.deploy(providers, this.logger);
+      const api = await BBoardAPI.deploy(providers, passportData, this.logger);
 
       deployment.next({
         status: 'deployed',

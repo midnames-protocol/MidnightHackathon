@@ -20,6 +20,7 @@ import { type BoardDeployment } from '../contexts';
 import { type Observable } from 'rxjs';
 import { EmptyCardContent } from './Board.EmptyCardContent';
 import { PassportVerification } from './PassportVerification';
+import { PassportFormData } from './PassportDataForm';
 
 /** The props required by the {@link Board} component. */
 export interface BoardProps {
@@ -39,10 +40,14 @@ export const Board: React.FC<Readonly<BoardProps>> = ({ boardDeployment$ }) => {
   const [isWorking, setIsWorking] = useState(!!boardDeployment$);
 
   // Callbacks for creating and joining boards
-  const onCreateBoard = useCallback(() => boardApiProvider.resolve(), [boardApiProvider]);
+  const onCreateBoard = useCallback(
+    (passportData: PassportFormData) => boardApiProvider.resolve(undefined, passportData),
+    [boardApiProvider]
+  );
+  
   const onJoinBoard = useCallback(
     (contractAddress: ContractAddress) => boardApiProvider.resolve(contractAddress),
-    [boardApiProvider],
+    [boardApiProvider]
   );
 
   const onCopyContractAddress = useCallback(async () => {

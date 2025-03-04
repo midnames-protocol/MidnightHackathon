@@ -5,7 +5,6 @@ import {
   CardContent, 
   CardHeader, 
   CircularProgress, 
-  Divider, 
   Grid, 
   Typography,
   Stepper,
@@ -17,8 +16,6 @@ import {
   useTheme
 } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import CancelIcon from '@mui/icons-material/Cancel';
-import LockIcon from '@mui/icons-material/Lock';
 import SecurityIcon from '@mui/icons-material/Security';
 import { type DeployedBBoardAPI } from '@midnight-ntwrk/bboard-api';
 
@@ -29,35 +26,14 @@ interface PassportVerificationProps {
 export const PassportVerification: React.FC<Readonly<PassportVerificationProps>> = ({ deployedBoardAPI }) => {
   const theme = useTheme();
   const [activeStep, setActiveStep] = useState(0);
-  const [isRegistering, setIsRegistering] = useState(false);
   const [isVerifyingAge, setIsVerifyingAge] = useState(false);
   const [ageValid, setAgeValid] = useState<boolean | null>(null);
-  const [userRegistered, setUserRegistered] = useState<boolean | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const steps = [
-    'Register with Passport',
     'Verify Age (21+)',
     'Access Granted'
   ];
-
-  const handleRegisterUser = async () => {
-    if (!deployedBoardAPI) return;
-    
-    setIsRegistering(true);
-    setError(null);
-    
-    try {
-      await deployedBoardAPI.create_user();
-      setUserRegistered(true);
-      setActiveStep(1); // Move to age verification step
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-      setUserRegistered(false);
-    } finally {
-      setIsRegistering(false);
-    }
-  };
 
   const handleVerifyAge = async () => {
     if (!deployedBoardAPI) return;
@@ -68,7 +44,7 @@ export const PassportVerification: React.FC<Readonly<PassportVerificationProps>>
     try {
       await deployedBoardAPI.validate_adulthood();
       setAgeValid(true);
-      setActiveStep(2); // Move to completion step
+      setActiveStep(1); // Move to completion step
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
       setAgeValid(false);
@@ -86,42 +62,11 @@ export const PassportVerification: React.FC<Readonly<PassportVerificationProps>>
               <Grid container spacing={2} alignItems="center">
                 <Grid item xs={12}>
                   <Typography variant="h6" gutterBottom>
-                    Register with Your Passport
-                  </Typography>
-                  <Typography variant="body2" color="textSecondary" gutterBottom>
-                    Your passport data will be securely verified using zero-knowledge proofs.
-                    No personal information is stored on the blockchain.
-                  </Typography>
-                </Grid>
-                <Grid item xs={12}>
-                  <Button 
-                    variant="contained" 
-                    color="primary" 
-                    fullWidth 
-                    size="large"
-                    disabled={isRegistering || userRegistered === true}
-                    onClick={handleRegisterUser}
-                    startIcon={isRegistering ? <CircularProgress size={20} /> : <LockIcon />}
-                  >
-                    {isRegistering ? 'Registering...' : 'Secure Register with Passport'}
-                  </Button>
-                </Grid>
-              </Grid>
-            </Paper>
-          </Box>
-        );
-      
-      case 1:
-        return (
-          <Box sx={{ mt: 3 }}>
-            <Paper elevation={2} sx={{ p: 3, backgroundColor: theme.palette.background.default }}>
-              <Grid container spacing={2} alignItems="center">
-                <Grid item xs={12}>
-                  <Typography variant="h6" gutterBottom>
                     Age Verification
                   </Typography>
                   <Typography variant="body2" color="textSecondary" gutterBottom>
                     Verify that you are over 21 years old without revealing your actual birthdate.
+                    Your passport data is already securely loaded in this contract.
                   </Typography>
                 </Grid>
                 <Grid item xs={12}>
@@ -142,7 +87,7 @@ export const PassportVerification: React.FC<Readonly<PassportVerificationProps>>
           </Box>
         );
       
-      case 2:
+      case 1:
         return (
           <Box sx={{ mt: 3 }}>
             <Alert severity="success" sx={{ mb: 2 }}>

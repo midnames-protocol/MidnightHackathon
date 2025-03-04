@@ -1,69 +1,115 @@
 import React, { useState } from 'react';
+import {
+  Box,
+  Typography,
+  Button,
+  CardContent,
+  FormHelperText,
+  Grid,
+  TextField,
+  Card,
+  Dialog,
+  DialogContent
+} from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
+import LinkIcon from '@mui/icons-material/Link';
 import { type ContractAddress } from '@midnight-ntwrk/compact-runtime';
-import { CardActions, CardContent, IconButton, Typography } from '@mui/material';
-import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
-import CreateBoardIcon from '@mui/icons-material/AddCircleOutlined';
-import JoinBoardIcon from '@mui/icons-material/AddLinkOutlined';
-import { TextPromptDialog } from './TextPromptDialog';
+import { Observable } from 'rxjs';
+import { BoardDeployment } from '../contexts';
+import { PassportDataForm, PassportFormData } from './PassportDataForm';
 
-/**
- * The props required by the {@link EmptyCardContent} component.
- *
- * @internal
- */
-export interface EmptyCardContentProps {
-  /** A callback that will be called to create a new passport verification contract. */
-  onCreateBoardCallback: () => void;
-  /** A callback that will be called to join an existing passport verification contract. */
-  onJoinBoardCallback: (contractAddress: ContractAddress) => void;
+interface EmptyCardContentProps {
+  onCreateBoardCallback: (passportData: PassportFormData) => Observable<BoardDeployment>;
+  onJoinBoardCallback: (contractAddress: ContractAddress) => Observable<BoardDeployment>;
 }
 
-/**
- * Used when there is no contract deployment to render a UI allowing the user to join or deploy contracts.
- *
- * @internal
- */
-export const EmptyCardContent: React.FC<Readonly<EmptyCardContentProps>> = ({
+export const EmptyCardContent: React.FC<EmptyCardContentProps> = ({
   onCreateBoardCallback,
   onJoinBoardCallback,
 }) => {
-  const [textPromptOpen, setTextPromptOpen] = useState(false);
+  const [joinAddress, setJoinAddress] = useState('');
+  const [joinAddressError, setJoinAddressError] = useState('');
+  const [isFormOpen, setIsFormOpen] = useState(false);
+
+  const handleCreateBoard = (passportData: PassportFormData) => {
+    onCreateBoardCallback(passportData);
+    setIsFormOpen(false);
+  };
+
+  const handleJoinBoard = () => {
+    if (joinAddress) {
+      // Validate perhaps?
+      onJoinBoardCallback(joinAddress);
+    } else {
+      setJoinAddressError('Please enter a contract address');
+    }
+  };
 
   return (
-    <React.Fragment>
-      <CardContent>
-        <Typography align="center" variant="h1" color="primary.dark">
-          <VerifiedUserIcon fontSize="large" />
+    <CardContent>
+      <Box sx={{ textAlign: 'center', py: 3 }}>
+        <Typography variant="h5" gutterBottom component="div" sx={{ fontWeight: 500 }}>
+          Passport Age Verification
         </Typography>
-        <Typography data-testid="board-posted-message" align="center" variant="body2" color="primary.dark">
-          Create a new Passport Verification Contract, or join an existing one...
+        <Typography variant="body1" sx={{ mb: 3 }} component="div">
+          Verify your age using passport data with zero-knowledge proofs
         </Typography>
-      </CardContent>
-      <CardActions disableSpacing>
-        <IconButton title="Create a new contract" data-testid="board-deploy-btn" onClick={onCreateBoardCallback}>
-          <CreateBoardIcon />
-        </IconButton>
-        <IconButton
-          title="Join an existing contract"
-          data-testid="board-join-btn"
-          onClick={() => {
-            setTextPromptOpen(true);
-          }}
-        >
-          <JoinBoardIcon />
-        </IconButton>
-      </CardActions>
-      <TextPromptDialog
-        prompt="Enter contract address"
-        isOpen={textPromptOpen}
-        onCancel={() => {
-          setTextPromptOpen(false);
-        }}
-        onSubmit={(text) => {
-          setTextPromptOpen(false);
-          onJoinBoardCallback(text);
-        }}
-      />
-    </React.Fragment>
+
+        <Grid container spacing={2} sx={{ mt: 3 }}>
+          <Grid item xs={12}>
+            <Button
+              onClick={() => setIsFormOpen(true)}
+              variant="contained"
+              startIcon={<AddIcon />}
+              fullWidth
+              size="large"
+            >
+              Create New Verification
+            </Button>
+          </Grid>
+          
+          <Grid item xs={12}>
+            <Typography variant="body2" sx={{ mt: 2, mb: 1 }} component="div">
+              Or join an existing verification:
+            </Typography>
+            <Box sx={{ display: 'flex' }}>
+              <TextField
+                label="Contract Address"
+                placeholder="Enter contract address"
+                fullWidth
+                value={joinAddress}
+                onChange={(event) => {
+                  setJoinAddress(event.target.value);
+                  setJoinAddressError('');
+                }}
+                error={!!joinAddressError}
+                helperText={joinAddressError}
+                size="small"
+              />
+              <Button
+                onClick={handleJoinBoard}
+                startIcon={<LinkIcon />}
+                disabled={!joinAddress}
+                sx={{ ml: 1 }}
+                variant="outlined"
+              >
+                Join
+              </Button>
+            </Box>
+          </Grid>
+        </Grid>
+      </Box>
+
+      <Dialog
+        open={isFormOpen}
+        onClose={() => setIsFormOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogContent>
+          <PassportDataForm onSubmit={handleCreateBoard} />
+        </DialogContent>
+      </Dialog>
+    </CardContent>
   );
 };

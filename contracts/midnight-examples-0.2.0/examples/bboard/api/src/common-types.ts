@@ -31,7 +31,7 @@ export type BBoardContract = Contract<BBoardPrivateState, Witnesses<BBoardPrivat
 /**
  * The keys of the circuits exported from {@link BBoardContract}.
  */
-export type BBoardCircuitKeys = Exclude<keyof BBoardContract['impureCircuits'], number | symbol>;
+export type BBoardCircuitKeys = "validate_nationality" | "validate_adulthood" | "passport_is_unexpired";
 
 /**
  * The providers required by {@link BBoardContract}.
@@ -58,7 +58,6 @@ export interface ContractMap<K, V> {
  * A type that represents the derived combination of public (or ledger), and private state.
  */
 export type BBoardDerivedState = {
-  readonly userPassportMap: ContractMap<Uint8Array, Uint8Array>;
   readonly adminAddress: Uint8Array;
   readonly passport_data: PassportDataPacket;
 };
