@@ -21,7 +21,7 @@ const server = https.createServer(sslOptions, app);
 // Initialize Socket.IO with HTTPS server
 const io = new SocketServer(server, {
   cors: {
-    origin: "https://localhost:8080", // Updated to HTTPS
+    origin: ["https://localhost:8080", "http://localhost:8080"], // Allow both HTTP and HTTPS
     methods: ["GET", "POST"],
     credentials: true,
   },
