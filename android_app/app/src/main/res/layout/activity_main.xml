@@ -1,56 +1,599 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true">
+    android:background="@color/black">
 
+    <!-- Welcome Container (Static instead of animation) -->
     <LinearLayout
+        android:id="@+id/welcomeContainer"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:orientation="vertical"
-        android:padding="16dp">
-
-        <EditText
-            android:id="@+id/etDocumentNumber"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Document Number"
-            android:layout_marginBottom="8dp"/>
-
-        <EditText
-            android:id="@+id/etDateOfBirth"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Date of Birth (YYMMDD)"
-            android:layout_marginBottom="8dp"/>
-
-        <EditText
-            android:id="@+id/etDateOfExpiry"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Date of Expiry (YYMMDD)"
-            android:layout_marginBottom="16dp"/>
+        android:gravity="center"
+        android:background="@color/black"
+        android:visibility="visible"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
         <TextView
-            android:id="@+id/tvStatus"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Place passport near device"
-            android:textAlignment="center"
-            android:layout_marginBottom="16dp"/>
+            android:text="MIDNAMES PROTOCOL"
+            android:textColor="@color/green_accent"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="24dp" />
+
+        <ImageView
+            android:id="@+id/welcomeIcon"
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:src="@drawable/ic_terminal"
+            app:tint="@color/green_accent" />
 
         <TextView
-            android:id="@+id/tvPassportData"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"/>
+            android:text="Keep your identity, yours."
+            android:textColor="@color/green_accent"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="16dp" />
 
-        <EditText
-            android:id="@+id/etIPAddress"
-            android:layout_width="match_parent"
+        <TextView
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:hint="ip:port of local deploy"
-            android:layout_marginBottom="16dp"/>
-
+            android:text="Initializing secure environment..."
+            android:textColor="@color/green_accent_60"
+            android:textSize="14sp" />
     </LinearLayout>
-</ScrollView>
+
+    <!-- Scan Container - New dedicated scanning screen -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/scanContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/black"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <!-- Scan Header -->
+        <LinearLayout
+            android:id="@+id/scanHeader"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="16dp"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_terminal"
+                app:tint="@color/green_accent" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Passport Scan"
+                android:textColor="@color/green_accent"
+                android:textSize="18sp"
+                android:layout_marginStart="12dp" />
+
+            <Button
+                android:id="@+id/btnCancelScan"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Cancel"
+                android:textColor="@color/white"
+                android:backgroundTint="@color/glass_card_bg"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <!-- Scan Animation Area -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="24dp"
+            app:layout_constraintTop_toBottomOf="@id/scanHeader"
+            app:layout_constraintBottom_toBottomOf="parent">
+
+            <!-- Passport Outline with Animation -->
+            <FrameLayout
+                android:layout_width="240dp"
+                android:layout_height="160dp"
+                android:background="@drawable/passport_outline"
+                android:layout_marginBottom="32dp">
+
+                <View
+                    android:id="@+id/scanLine"
+                    android:layout_width="match_parent"
+                    android:layout_height="2dp"
+                    android:background="@color/green_accent"
+                    android:layout_gravity="top" />
+
+                <!-- Passport Chip Icon -->
+                <ImageView
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:src="@drawable/ic_nfc_chip"
+                    android:layout_gravity="bottom|end"
+                    android:layout_margin="16dp"
+                    app:tint="@color/green_accent_60" />
+            </FrameLayout>
+
+            <!-- Scan Instructions -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Place your passport on the back of your device"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                android:textAlignment="center"
+                android:layout_marginBottom="16dp" />
+
+            <!-- Scan Status -->
+            <TextView
+                android:id="@+id/tvScanStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="$ awaiting_passport: Please place your passport on the device"
+                android:textColor="@color/green_accent"
+                android:textSize="14sp"
+                android:textAlignment="center" />
+        </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:visibility="gone"
+        android:id="@+id/scrollContainer"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <LinearLayout
+            android:id="@+id/formContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="24dp">
+
+            <!-- Header -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="32dp">
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_terminal"
+                    app:tint="@color/green_accent" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="MidNames Passport Reader"
+                    android:textColor="@color/green_accent"
+                    android:textSize="16sp"
+                    android:layout_marginStart="12dp" />
+            </LinearLayout>
+
+            <!-- Command Prompt -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="$ midnames --passport-scan"
+                android:textColor="@color/green_accent_60"
+                android:textSize="14sp"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Passport Authentication"
+                android:textColor="@color/white"
+                android:textSize="24sp"
+                android:layout_marginBottom="32dp" />
+
+            <!-- Document Number Input -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilDocumentNumber"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:boxBackgroundColor="@color/glass_card_bg"
+                app:boxStrokeColor="@color/green_accent_30"
+                app:boxStrokeWidth="1dp"
+                app:hintTextColor="@color/green_accent"
+                android:hint="Document Number"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etDocumentNumber"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/green_accent"
+                    android:inputType="text" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Date of Birth Input -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilDateOfBirth"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:boxBackgroundColor="@color/glass_card_bg"
+                app:boxStrokeColor="@color/green_accent_30"
+                app:boxStrokeWidth="1dp"
+                app:hintTextColor="@color/green_accent"
+                android:hint="Date of Birth (YYMMDD)"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etDateOfBirth"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/green_accent"
+                    android:inputType="number" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Date of Expiry Input -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilDateOfExpiry"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:boxBackgroundColor="@color/glass_card_bg"
+                app:boxStrokeColor="@color/green_accent_30"
+                app:boxStrokeWidth="1dp"
+                app:hintTextColor="@color/green_accent"
+                android:hint="Date of Expiry (YYMMDD)"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etDateOfExpiry"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/green_accent"
+                    android:inputType="number" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- IP Address Input -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilIPAddress"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                app:boxBackgroundColor="@color/glass_card_bg"
+                app:boxStrokeColor="@color/green_accent_30"
+                app:boxStrokeWidth="1dp"
+                app:hintTextColor="@color/green_accent"
+                android:hint="Server Address (ip:port)"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etIPAddress"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/green_accent"
+                    android:inputType="text" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Scan Button -->
+            <Button
+                android:id="@+id/btnScanPassport"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Scan Passport"
+                android:textColor="@color/black"
+                android:backgroundTint="@color/green_accent"
+                android:padding="12dp"
+                android:enabled="false"
+                android:alpha="0.5"
+                android:layout_marginBottom="24dp" />
+
+            <!-- Scan Again Button (Hidden initially, shown after successful scan) -->
+            <Button
+                android:id="@+id/btnScanAgain"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Scan Another Passport"
+                android:textColor="@color/black"
+                android:backgroundTint="@color/green_accent"
+                android:padding="12dp"
+                android:visibility="gone"
+                android:layout_marginBottom="24dp" />
+
+            <!-- Status Card -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/statusCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                app:cardBackgroundColor="@color/glass_card_bg"
+                app:cardCornerRadius="0dp"
+                app:cardElevation="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="$ status"
+                        android:textColor="@color/green_accent_60"
+                        android:textSize="14sp"
+                        android:layout_marginBottom="8dp" />
+
+                    <TextView
+                        android:id="@+id/tvStatus"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Place passport near device"
+                        android:textColor="@color/green_accent"
+                        android:textSize="16sp" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Digital ID Card View (Visible after scan) -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardPassportID"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                app:cardBackgroundColor="@color/glass_card_bg"
+                app:cardCornerRadius="4dp"
+                app:cardElevation="2dp"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <!-- Card Header with holographic effect -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@color/green_accent_10"
+                        android:padding="12dp"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="INTERNATIONAL PASSPORT"
+                            android:textColor="@color/green_accent"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvCardDocNumber"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/green_accent"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <!-- Card Content -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:padding="16dp">
+
+                        <!-- Left side: Photo placeholder -->
+                        <FrameLayout
+                            android:layout_width="100dp"
+                            android:layout_height="120dp"
+                            android:background="@color/green_accent_10"
+                            android:layout_marginEnd="16dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center"
+                                android:text="PHOTO"
+                                android:textColor="@color/green_accent_60"
+                                android:textSize="12sp" />
+                        </FrameLayout>
+
+                        <!-- Right side: Personal details -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/tvCardName"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:textColor="@color/white"
+                                android:textSize="18sp"
+                                android:textStyle="bold"
+                                android:layout_marginBottom="8dp" />
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:layout_marginBottom="4dp">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Nationality: "
+                                    android:textColor="@color/green_accent_60"
+                                    android:textSize="14sp" />
+
+                                <TextView
+                                    android:id="@+id/tvCardNationality"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:textColor="@color/green_accent"
+                                    android:textSize="14sp" />
+                            </LinearLayout>
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:layout_marginBottom="4dp">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Date of Birth: "
+                                    android:textColor="@color/green_accent_60"
+                                    android:textSize="14sp" />
+
+                                <TextView
+                                    android:id="@+id/tvCardDOB"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:textColor="@color/green_accent"
+                                    android:textSize="14sp" />
+                            </LinearLayout>
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:layout_marginBottom="4dp">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Gender: "
+                                    android:textColor="@color/green_accent_60"
+                                    android:textSize="14sp" />
+
+                                <TextView
+                                    android:id="@+id/tvCardGender"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:textColor="@color/green_accent"
+                                    android:textSize="14sp" />
+                            </LinearLayout>
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Expiry: "
+                                    android:textColor="@color/green_accent_60"
+                                    android:textSize="14sp" />
+
+                                <TextView
+                                    android:id="@+id/tvCardExpiry"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:textColor="@color/green_accent"
+                                    android:textSize="14sp" />
+                            </LinearLayout>
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- Card Footer with issuing authority -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="12dp"
+                        android:background="@color/green_accent_10">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Issuing State: "
+                                android:textColor="@color/green_accent_60"
+                                android:textSize="12sp" />
+
+                            <TextView
+                                android:id="@+id/tvCardIssuingState"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textColor="@color/green_accent"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="VERIFIED BY MIDNAMES"
+                            android:textColor="@color/green_accent_80"
+                            android:textSize="10sp"
+                            android:textAlignment="textEnd"
+                            android:layout_marginTop="4dp" />
+                    </LinearLayout>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Raw Passport Data Card (can be hidden or shown based on preference) -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/passportDataCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardBackgroundColor="@color/glass_card_bg"
+                app:cardCornerRadius="0dp"
+                app:cardElevation="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="$ passport --data"
+                        android:textColor="@color/green_accent_60"
+                        android:textSize="14sp"
+                        android:layout_marginBottom="8dp" />
+
+                    <TextView
+                        android:id="@+id/tvPassportData"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/green_accent_80"
+                        android:textSize="14sp" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+        </LinearLayout>
+    </ScrollView>
+</androidx.constraintlayout.widget.ConstraintLayout>
