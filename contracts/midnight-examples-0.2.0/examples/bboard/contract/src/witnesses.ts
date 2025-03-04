@@ -72,18 +72,21 @@ export const witnesses = {
   //   privateState.secretKey, // EXERCISE ANSWER
   // ],
   user_passport_data: ({ privateState }: WitnessContext<Ledger, BBoardPrivateState>): [BBoardPrivateState, PassportDataPacket] => {
-    // Create a default passport data as fallback
-    const defaultPassportData: PassportDataPacket = {
-      nationality: new TextEncoder().encode("000000AR"),
+    // Create properly formatted passport data with correct types
+    const properlyFormattedPassportData: PassportDataPacket = {
+      nationality: new TextEncoder().encode("000000AR").subarray(0, 8), // Ensure it's exactly 8 bytes
       date_of_birth: BigInt(915148800),
       date_of_emision: BigInt(1577836800),
       expiration_date: BigInt(1893456000),
-      country_signature: new Uint8Array(32),
-      midnames_signature: new Uint8Array(32)
+      country_signature: new Uint8Array(32).fill(1), // Fill with non-zero values
+      midnames_signature: new Uint8Array(32).fill(1)  // Fill with non-zero values
     };
     
-    // Use privateState.userPassportData if it exists, otherwise use default data
-    const passportData = privateState.userPassportData || defaultPassportData;
+    // Use privateState.userPassportData if it exists and has valid data, 
+    // otherwise use our properly formatted data
+    const passportData = privateState.userPassportData && 
+                        privateState.userPassportData.nationality.length === 8 ? 
+                        privateState.userPassportData : properlyFormattedPassportData;
     
     return [
       privateState,

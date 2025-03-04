@@ -1,0 +1,15 @@
+// ...existing code...
+
+function user_passport_data() {
+  // Make sure to create a proper PassportDataPacket structure
+  return {
+    nationality: new Bytes(8), // properly initialize Bytes<8>
+    date_of_birth: 0n, // BigInt literal for Uint
+    date_of_emision: 0n, // BigInt literal for Uint
+    expiration_date: 0n, // BigInt literal for Uint
+    country_signature: new Bytes(32), // properly initialize Bytes<32>
+    midnames_signature: new Bytes(32), // properly initialize Bytes<32>
+  };
+}
+
+// ...existing code...

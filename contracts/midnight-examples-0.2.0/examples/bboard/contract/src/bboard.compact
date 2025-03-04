@@ -44,17 +44,16 @@ export circuit validate_adulthood() : [] {
      "User is not old enough";
 }
 
-// Validates that a passport is unexpired
-export circuit passport_is_unexpired() : [] {
-    // Hardcoded for now. TODO: once a datetime function
-    // is in place in Compact, use that
-    const datetime = 1741058834;
+// Validates that a passport is unexpired - optimized version
+export circuit passport_is_unexpired(): [] {
+    // Hardcoded date value (representing current time)
+    const datetime = 1741058834 as Uint<64>;
 
-    const user_pass = user_passport_data();
-    const expdate = user_pass.expiration_date;
+    // Extract only the expiration date to minimize memory usage
+    const expiration_date = user_passport_data().expiration_date;
     
-    assert expdate > datetime
-     "Passport is expired";
+    // Simple comparison to check if passport is still valid
+    assert expiration_date > datetime "Passport is expired";
 }
 
 ///export circuit create_user() : [] {

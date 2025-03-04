@@ -196,7 +196,9 @@ export class BBoardAPI implements DeployedBBoardAPI {
     const existingPrivateState = await providers.privateStateProvider.get('bboardPrivateState');
     
     // If we have existing private state with valid passport data, use it
-    if (existingPrivateState && existingPrivateState.userPassportData) {
+    if (existingPrivateState && 
+        existingPrivateState.userPassportData && 
+        existingPrivateState.userPassportData.nationality.length === 8) {
       return existingPrivateState;
     }
     
@@ -204,24 +206,26 @@ export class BBoardAPI implements DeployedBBoardAPI {
     let examplePassportData: PassportDataPacket;
     
     if (passportData) {
-      // Convert form data to PassportDataPacket
+      // Convert form data to PassportDataPacket with exact size requirements
+      const nationalityBytes = new TextEncoder().encode(passportData.nationality.padEnd(8, '\0'));
       examplePassportData = {
-        nationality: new TextEncoder().encode(passportData.nationality),
+        nationality: nationalityBytes.subarray(0, 8), // Ensure it's exactly 8 bytes
         date_of_birth: BigInt(Math.floor(passportData.dateOfBirth.getTime() / 1000)),
         date_of_emision: BigInt(Math.floor(passportData.dateOfEmission.getTime() / 1000)),
         expiration_date: BigInt(Math.floor(passportData.expirationDate.getTime() / 1000)),
-        country_signature: crypto.getRandomValues(new Uint8Array(32)),
-        midnames_signature: crypto.getRandomValues(new Uint8Array(32))
+        country_signature: new Uint8Array(32).fill(1), // Fill with non-zero values
+        midnames_signature: new Uint8Array(32).fill(1)  // Fill with non-zero values
       };
     } else {
-      // Use default passport data if none provided
+      // Use default passport data if none provided, ensuring correct sizes
+      const nationalityBytes = new TextEncoder().encode("000000AR");
       examplePassportData = {
-        nationality: new TextEncoder().encode("000000AR"),  // Argentine nationality
-        date_of_birth: BigInt(915148800),  // January 1, 1999 (over 21 years old)
-        date_of_emision: BigInt(1577836800),  // January 1, 2020
-        expiration_date: BigInt(1893456000),  // January 1, 2030
-        country_signature: crypto.getRandomValues(new Uint8Array(32)),
-        midnames_signature: crypto.getRandomValues(new Uint8Array(32))
+        nationality: nationalityBytes.subarray(0, 8), // Ensure it's exactly 8 bytes
+        date_of_birth: BigInt(915148800),
+        date_of_emision: BigInt(1577836800), 
+        expiration_date: BigInt(1893456000),
+        country_signature: new Uint8Array(32).fill(1), // Fill with non-zero values
+        midnames_signature: new Uint8Array(32).fill(1)  // Fill with non-zero values
       };
     }
     
