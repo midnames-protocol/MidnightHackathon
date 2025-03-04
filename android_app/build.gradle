@@ -1,5 +1,57 @@
-// Top-level build file where you can add configuration options common to all sub-projects/modules.
 plugins {
-alias(libs.plugins.android.application) apply false
-    alias(libs.plugins.kotlin.android) apply false
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+}
+
+android {
+    namespace 'com.midnames.passportreader'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId "com.midnames.passportreader"
+        minSdk 24
+        targetSdk 35
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+    kotlinOptions {
+        jvmTarget = '11'
+    }
+    buildFeatures {
+        viewBinding true
+    }
+}
+
+dependencies {
+    implementation libs.androidx.core.ktx
+    implementation libs.androidx.appcompat
+    implementation libs.material
+    testImplementation libs.junit
+    androidTestImplementation libs.androidx.junit
+    androidTestImplementation libs.androidx.espresso.core
+    implementation libs.jmrtd
+    implementation libs.scuba.sc.android
+    implementation libs.bcprov.jdk15on
+    implementation libs.prov
+    implementation libs.cert.cvc
+    implementation libs.scuba.smartcards
+    implementation libs.imageio.jpeg
+    implementation libs.imageio.core
+    implementation libs.imageio.metadata
+    implementation "com.squareup.okhttp3:okhttp:4.11.0"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3"
+    implementation "androidx.constraintlayout:constraintlayout:2.1.4"
 }
