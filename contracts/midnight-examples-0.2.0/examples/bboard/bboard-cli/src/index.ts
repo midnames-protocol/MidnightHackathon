@@ -114,7 +114,7 @@ const displayLedgerState = async (
     logger.info(`There is no passport verification contract deployed at ${contractAddress}`);
   } else {
     logger.info(`Admin address: ${toHex(ledgerState.adminAddress)}`);
-    // Fix: Remove reference to userPassportMap which doesn't exist in our Ledger type
+    logger.info('Passport verification contract is deployed and active');
   }
 };
 

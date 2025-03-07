@@ -193,47 +193,42 @@ export class BBoardAPI implements DeployedBBoardAPI {
   }
 
   private static async getPrivateState(providers: BBoardProviders, passportData?: PassportFormData): Promise<BBoardPrivateState> {
+    // Get existing state if available
     const existingPrivateState = await providers.privateStateProvider.get('bboardPrivateState');
     
-    // If we have existing private state with valid passport data, use it
-    if (existingPrivateState && 
-        existingPrivateState.userPassportData && 
-        existingPrivateState.userPassportData.nationality.length === 8) {
-      return existingPrivateState;
-    }
-    
-    // Create passport data - either from form or default values
-    let examplePassportData: PassportDataPacket;
-    
+    // When deploying a new contract with passport data, we should always use that data
+    // regardless of whether we have existing private state
     if (passportData) {
       // Convert form data to PassportDataPacket with exact size requirements
       const nationalityBytes = new TextEncoder().encode(passportData.nationality.padEnd(8, '\0'));
-      examplePassportData = {
+      const passportDataPacket = {
         nationality: nationalityBytes.subarray(0, 8), // Ensure it's exactly 8 bytes
         date_of_birth: BigInt(Math.floor(passportData.dateOfBirth.getTime() / 1000)),
         date_of_emision: BigInt(Math.floor(passportData.dateOfEmission.getTime() / 1000)),
         expiration_date: BigInt(Math.floor(passportData.expirationDate.getTime() / 1000)),
-        country_signature: new Uint8Array(32).fill(1), // Fill with non-zero values
+        country_signature: new Uint8Array(32).fill(1), // Placeholder signatures
         midnames_signature: new Uint8Array(32).fill(1)  // Fill with non-zero values
       };
-    } else {
-      // Use default passport data if none provided, ensuring correct sizes
-      const nationalityBytes = new TextEncoder().encode("000000AR");
-      examplePassportData = {
-        nationality: nationalityBytes.subarray(0, 8), // Ensure it's exactly 8 bytes
-        date_of_birth: BigInt(915148800),
-        date_of_emision: BigInt(1577836800), 
-        expiration_date: BigInt(1893456000),
-        country_signature: new Uint8Array(32).fill(1), // Fill with non-zero values
-        midnames_signature: new Uint8Array(32).fill(1)  // Fill with non-zero values
-      };
+      
+      return createBBoardPrivateState(passportDataPacket);
     }
     
-    // We need a secretKey as well as userPassportData
-    const secretKey = crypto.getRandomValues(new Uint8Array(32));
+    // If we have existing state with valid passport data, use it
+    if (existingPrivateState?.userPassportData) {
+      return existingPrivateState;
+    }
     
-    // Create new private state with passport data
-    return createBBoardPrivateState(secretKey, examplePassportData);
+    // If no data exists and none provided, create an empty passport data structure
+    const emptyPassportData = {
+      nationality: new Uint8Array(8),
+      date_of_birth: BigInt(0),
+      date_of_emision: BigInt(0),
+      expiration_date: BigInt(0),
+      country_signature: new Uint8Array(32),
+      midnames_signature: new Uint8Array(32)
+    };
+    
+    return createBBoardPrivateState(emptyPassportData);
   }
 }
 

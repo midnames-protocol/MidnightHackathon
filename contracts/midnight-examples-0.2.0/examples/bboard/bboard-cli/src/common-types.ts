@@ -31,7 +31,7 @@ export type BBoardContract = Contract<BBoardPrivateState, Witnesses<BBoardPrivat
 /**
  * The keys of the circuits exported from passport verification contract.
  */
-export type BBoardCircuitKeys = 'create_user' | 'validate_nationality' | 'validate_adulthood' | 'passport_is_unexpired';
+export type BBoardCircuitKeys = 'validate_nationality' | 'validate_adulthood' | 'passport_is_unexpired';
 
 /**
  * The providers required by the passport verification contract.
@@ -44,21 +44,9 @@ export type BBoardProviders = MidnightProviders<BBoardCircuitKeys, PrivateStates
 export type DeployedBBoardContract = FoundContract<BBoardPrivateState, BBoardContract>;
 
 /**
- * Custom Map type matching the contract's map structure
- */
-export interface ContractMap<K, V> {
-  isEmpty(): boolean;
-  size(): bigint;
-  member(key: K): boolean;
-  lookup(key: K): V;
-  [Symbol.iterator](): Iterator<[K, V]>;
-}
-
-/**
  * A type that represents the derived combination of public (or ledger), and private state.
  */
 export type BBoardDerivedState = {
-  readonly userPassportMap: ContractMap<Uint8Array, Uint8Array>;
   readonly adminAddress: Uint8Array;
   readonly passport_data: PassportDataPacket;
 };
