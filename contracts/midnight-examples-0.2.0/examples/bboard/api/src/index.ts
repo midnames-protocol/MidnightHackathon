@@ -100,15 +100,45 @@ export class BBoardAPI implements DeployedBBoardAPI {
   async validate_nationality(): Promise<void> {
     this.logger?.info('Validating nationality');
 
-    const txData = await this.deployedContract.callTx.validate_nationality();
-
-    this.logger?.trace({
-      transactionAdded: {
-        circuit: 'validate_nationality',
-        txHash: txData.public.txHash,
-        blockHeight: txData.public.txHash,
-      },
-    });
+    try {
+      // Check if we have valid passport data first
+      const state = await new Promise<BBoardDerivedState>((resolve) => {
+        let subscription = this.state$.subscribe((state) => {
+          resolve(state);
+          subscription.unsubscribe();
+        });
+      });
+      
+      console.log('Current nationality in private state:', state.passport_data?.nationality ? 
+        new TextDecoder().decode(state.passport_data.nationality) : 'none');
+        
+      // Create the transaction with explicit error handling
+      const txData = await this.deployedContract.callTx.validate_nationality();
+      
+      this.logger?.trace({
+        transactionAdded: {
+          circuit: 'validate_nationality',
+          txHash: txData.public.txHash,
+          blockHeight: txData.public.txHash,
+        },
+      });
+      
+      console.log('Nationality verification transaction completed successfully');
+    } catch (error) {
+      console.error('Error in validate_nationality:', error);
+      
+      // Specific error handling for different error types
+      if (error instanceof Error) {
+        if (error.message.includes('Witness')) {
+          console.error('Witness generation error - likely invalid nationality format');
+        } else if (error.message.includes('transaction')) {
+          console.error('Transaction error - check wallet connection and permissions');
+        }
+      }
+      
+      // Re-throw the error to be handled by the UI
+      throw error;
+    }
   }
 
   /**
@@ -199,18 +229,41 @@ export class BBoardAPI implements DeployedBBoardAPI {
     // When deploying a new contract with passport data, we should always use that data
     // regardless of whether we have existing private state
     if (passportData) {
-      // Convert form data to PassportDataPacket with exact size requirements
-      const nationalityBytes = new TextEncoder().encode(passportData.nationality.padEnd(8, '\0'));
-      const passportDataPacket = {
-        nationality: nationalityBytes.subarray(0, 8), // Ensure it's exactly 8 bytes
-        date_of_birth: BigInt(Math.floor(passportData.dateOfBirth.getTime() / 1000)),
-        date_of_emision: BigInt(Math.floor(passportData.dateOfEmission.getTime() / 1000)),
-        expiration_date: BigInt(Math.floor(passportData.expirationDate.getTime() / 1000)),
-        country_signature: new Uint8Array(32).fill(1), // Placeholder signatures
-        midnames_signature: new Uint8Array(32).fill(1)  // Fill with non-zero values
-      };
-      
-      return createBBoardPrivateState(passportDataPacket);
+      try {
+        // Format nationality bytes properly for any nationality
+        const encoder = new TextEncoder();
+        let nationalityBytes: Uint8Array;
+        
+        console.log(`Creating passport data for nationality: ${passportData.nationality}`);
+        
+        // Always create a clean Uint8Array of size 8 first
+        nationalityBytes = new Uint8Array(8);
+        
+        // Format any nationality to the required format: 6 padding chars + 2 letter country code
+        // This ensures proper validation will be done by the contract, not by the client
+        const countryCode = passportData.nationality.substring(0, 2);
+        const formatted = `000000${countryCode}`;
+        const bytes = encoder.encode(formatted.slice(-8)); // Ensure we have 8 bytes max
+        nationalityBytes.set(bytes);
+        
+        console.log("Nationality formatted as:", formatted.slice(-8));
+        console.log("Nationality bytes (decimal):", Array.from(nationalityBytes));
+        console.log("Nationality bytes (hex):", Array.from(nationalityBytes).map(b => b.toString(16).padStart(2, '0')).join(''));
+        
+        const passportDataPacket = {
+          nationality: nationalityBytes,
+          date_of_birth: BigInt(Math.floor(passportData.dateOfBirth.getTime() / 1000)),
+          date_of_emision: BigInt(Math.floor(passportData.dateOfEmission.getTime() / 1000)),
+          expiration_date: BigInt(Math.floor(passportData.expirationDate.getTime() / 1000)),
+          country_signature: new Uint8Array(32).fill(1), // Placeholder signatures
+          midnames_signature: new Uint8Array(32).fill(1)  // Fill with non-zero values
+        };
+        
+        return createBBoardPrivateState(passportDataPacket);
+      } catch (error) {
+        console.error("Error creating passport data:", error);
+        throw error;
+      }
     }
     
     // If we have existing state with valid passport data, use it

@@ -20,6 +20,7 @@ import {
   Stack
 } from '@mui/material';
 import CloudDownloadIcon from '@mui/icons-material/CloudDownload';
+import SettingsBackupRestoreIcon from '@mui/icons-material/SettingsBackupRestore';
 import socketService from '../services/SocketService';
 import { mapRequestDataToPassportData } from '../models/PassportDataMapper';
 import { RequestData } from '../models/RequestData';
@@ -83,6 +84,106 @@ interface PassportDataFormProps {
   isLoading?: boolean;
 }
 
+// Test case presets
+const testCases = [
+  {
+    id: 'default',
+    name: 'Default Values (Argentine)',
+    data: {
+      nationality: 'ARG', // Must be exactly 'ARG' for contract verification
+      dateOfBirth: '1999-01-01',
+      dateOfEmission: '2020-01-01',
+      expirationDate: '2030-01-01',
+      documentNumber: 'AB123456',
+      firstName: 'Juan',
+      lastName: 'Perez',
+      gender: 'MALE',
+      issuingState: 'ARG',
+      pubkey: ''
+    }
+  },
+  {
+    id: 'young-person',
+    name: 'Young Person (Under 21)',
+    data: {
+      nationality: 'ARG',
+      dateOfBirth: '2010-01-01',  // 14 years old in 2024
+      dateOfEmission: '2022-01-01',
+      expirationDate: '2027-01-01',
+      documentNumber: 'YP987654',
+      firstName: 'Emma',
+      lastName: 'Young',
+      gender: 'FEMALE',
+      issuingState: 'ARG',
+      pubkey: ''
+    }
+  },
+  {
+    id: 'expired-passport',
+    name: 'Expired Passport',
+    data: {
+      nationality: 'ARG',
+      dateOfBirth: '1985-01-01',
+      dateOfEmission: '2013-01-01',
+      expirationDate: '2023-01-01',  // Already expired
+      documentNumber: 'EX456789',
+      firstName: 'Robert',
+      lastName: 'Smith',
+      gender: 'MALE',
+      issuingState: 'ARG',
+      pubkey: ''
+    }
+  },
+  {
+    id: 'non-argentine',
+    name: 'Non-Argentine (USA)',
+    data: {
+      nationality: 'USA',
+      dateOfBirth: '1992-01-01',
+      dateOfEmission: '2019-01-01',
+      expirationDate: '2029-01-01',
+      documentNumber: 'US123456',
+      firstName: 'Alice',
+      lastName: 'Johnson',
+      gender: 'FEMALE',
+      issuingState: 'USA',
+      pubkey: ''
+    }
+  },
+  {
+    id: 'valid-all',
+    name: 'Valid All Verifications (Argentine)',
+    data: {
+      nationality: 'ARG',
+      dateOfBirth: '1990-01-01',  // Over 21
+      dateOfEmission: '2023-01-01',
+      expirationDate: '2033-01-01',  // Not expired
+      documentNumber: 'VA789012',
+      firstName: 'Carlos',
+      lastName: 'Rodriguez',
+      gender: 'MALE',
+      issuingState: 'ARG',
+      pubkey: ''
+    }
+  },
+  {
+    id: 'debug-argentine',
+    name: 'Debug - Argentine Only',
+    data: {
+      nationality: 'ARG',
+      dateOfBirth: '2000-01-01',
+      dateOfEmission: '2022-01-01',
+      expirationDate: '2032-01-01',
+      documentNumber: 'DEBUG123',
+      firstName: 'Debug',
+      lastName: 'User',
+      gender: 'MALE',
+      issuingState: 'ARG',
+      pubkey: ''
+    }
+  }
+];
+
 export const PassportDataForm: React.FC<PassportDataFormProps> = ({ onSubmit, isLoading = false }) => {
   // Form state - using strings for date inputs
   const [nationality, setNationality] = useState<string>('ARG');
@@ -111,6 +212,9 @@ export const PassportDataForm: React.FC<PassportDataFormProps> = ({ onSubmit, is
 
   // Reference to store the timeout ID so we can clear it
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Add state for test case selection
+  const [selectedTestCase, setSelectedTestCase] = useState<string>('');
 
   // Validate the form whenever inputs change
   useEffect(() => {
@@ -260,6 +364,34 @@ export const PassportDataForm: React.FC<PassportDataFormProps> = ({ onSubmit, is
     setLoadingSuccess(false);
   };
 
+  // Handler for test case selection
+  const handleTestCaseChange = (event: SelectChangeEvent) => {
+    const testCaseId = event.target.value;
+    setSelectedTestCase(testCaseId);
+    
+    if (!testCaseId) return;
+    
+    const testCase = testCases.find(tc => tc.id === testCaseId);
+    if (testCase) {
+      // Apply test case data to form
+      console.log(`Applying test case: ${testCase.name} with nationality: ${testCase.data.nationality}`);
+      setNationality(testCase.data.nationality);
+      setDateOfBirth(testCase.data.dateOfBirth);
+      setDateOfEmission(testCase.data.dateOfEmission);
+      setExpirationDate(testCase.data.expirationDate);
+      setDocumentNumber(testCase.data.documentNumber);
+      setFirstName(testCase.data.firstName);
+      setLastName(testCase.data.lastName);
+      setGender(testCase.data.gender);
+      setIssuingState(testCase.data.issuingState);
+      setPubkey(testCase.data.pubkey);
+      
+      // Update success state for visual feedback
+      setLoadingSuccess(true);
+      setTimeout(() => setLoadingSuccess(false), 3000);
+    }
+  };
+
   return (
     <Container maxWidth="md">
       <Card>
@@ -307,7 +439,7 @@ export const PassportDataForm: React.FC<PassportDataFormProps> = ({ onSubmit, is
           
           {loadingSuccess && (
             <Alert severity="success" sx={{ marginBottom: 2 }}>
-              Successfully loaded passport data from app!
+              Successfully loaded passport data!
             </Alert>
           )}
           
@@ -316,6 +448,32 @@ export const PassportDataForm: React.FC<PassportDataFormProps> = ({ onSubmit, is
               Waiting for passport data from the app. Please complete the process on your device.
             </Alert>
           )}
+
+          {/* Test Case Selector */}
+          <Box sx={{ mb: 3 }}>
+            <FormControl fullWidth>
+              <InputLabel id="test-case-label">Load Test Case</InputLabel>
+              <Select
+                labelId="test-case-label"
+                id="test-case-selector"
+                value={selectedTestCase}
+                label="Load Test Case"
+                onChange={handleTestCaseChange}
+                disabled={loadingFromApp || isLoading}
+                // Using a standard MUI icon component
+                IconComponent={SettingsBackupRestoreIcon}
+              >
+                <MenuItem value="">
+                  <em>Select a test case</em>
+                </MenuItem>
+                {testCases.map((testCase) => (
+                  <MenuItem key={testCase.id} value={testCase.id}>
+                    {testCase.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
 
           <form onSubmit={handleSubmit}>
             <Grid container spacing={3}>
